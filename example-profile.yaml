@@ -1,0 +1,67 @@
+---
+# name of the filter profile; shown in the dashboard
+name: "Rename 'Heinrich Braun' to 'Prolog Master' and only include Mondays after 9 o' clock"
+
+# time to cache a response from an .ics source
+# to prevent rate limiting
+cache-duration: 5m
+
+# requested flows
+flows:
+  # `flows` contains an implicit `if: true`
+  - if: 'true'
+    then:
+    - debug: "true 1 ok"
+    - if: 'true'
+      then:
+      - return
+      - debug: 'true 2 ok'
+      - if: 'true'
+        then:
+        - debug: 'true 3 ok'
+    else:
+    - debug: 'ok schade'
+
+  # flows are executed in order
+  # so first, all all events are removed from the calendar
+  # using the `filters/filter-out` flow
+
+  # filter all events out
+  - do: filters/filter-out
+
+  # after that, execute a regex search using the `actions/regex-replace` flow
+  # matching 'Heinrich Braun' and 'Braun, Heinrich' (case-sensitive being false)
+  # and replace any match with 'Prolog Master'.
+  # The $<number> placeholder can be used to replace a match with the specified group number
+  # match: hello (w...d)
+  # replace: 'Hello $1'
+  # --> 'hello woood' -> 'Hello woood'
+  # --> 'hello world' -> 'Hello world'
+
+  # rename Heinrich Braun to Prolog Master
+  - do: actions/regex-replace
+    with:
+      match: '(?:Braun\,\s*(Heinrich))|(?:(Heinrich) Braun)'
+      case-sensitive: false
+      replace: 'Prolog Master "$1"'
+      in: ["title", "description"]
+
+  # if event takes place on weekends,
+  # do not execute any other following flows and exit current filter profile
+
+  - if: 'Date.isWeekend()'
+    then:
+      - return
+    else:
+      - return
+
+  # Conditions can access the `Date` object from the current event.
+  # `isAfter` can be used to check if an event is after a specified time.
+  # The `filters/filter-in` flow tells RALF to include this event
+  # even with all events being filtered out in the first step (order)
+
+  # only include mondays and tuesdays after 10:00
+  - if: '(Date.isMonday() or Date.isTuesday()) and Date.isAfter("9:00")'
+    then:
+      - do: filters/filter-in
+...
