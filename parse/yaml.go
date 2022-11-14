@@ -7,9 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var ErrInvalidTag = errors.New("invalid tag")
-
-func ParseFlow(node *yaml.Node) (model.Flow, error) {
+func FlowFromYaml(node *yaml.Node) (model.Flow, error) {
 	// simple text flow
 	if v := node.Value; v != "" {
 		switch v {

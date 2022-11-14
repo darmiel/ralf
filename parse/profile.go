@@ -13,7 +13,7 @@ type parseProfile struct {
 	Flows         []yaml.Node   `yaml:"flows"`
 }
 
-func ParseProfile(file string) (*model.Profile, error) {
+func ProfileFromYAML(file string) (*model.Profile, error) {
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, err
@@ -30,7 +30,7 @@ func ParseProfile(file string) (*model.Profile, error) {
 
 	var flows []model.Flow
 	for _, flow := range p.Flows {
-		flow, err := ParseFlow(&flow)
+		flow, err := FlowFromYaml(&flow)
 		if err != nil {
 			panic(err)
 		}

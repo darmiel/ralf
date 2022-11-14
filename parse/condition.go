@@ -22,7 +22,7 @@ func parseConditionFromYaml(node *yaml.Node) (model.Flow, error) {
 	// fill then's
 	var thenFlows []model.Flow
 	for _, condThen := range parseCond.Then {
-		flow, err := ParseFlow(&condThen)
+		flow, err := FlowFromYaml(&condThen)
 		if err != nil {
 			return nil, err
 		}
@@ -31,7 +31,7 @@ func parseConditionFromYaml(node *yaml.Node) (model.Flow, error) {
 	// fill else's
 	var elseFlows []model.Flow
 	for _, condElse := range parseCond.Else {
-		flow, err := ParseFlow(&condElse)
+		flow, err := FlowFromYaml(&condElse)
 		if err != nil {
 			return nil, err
 		}

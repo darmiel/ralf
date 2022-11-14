@@ -43,7 +43,7 @@ func (c *ContextFlow) run(flow model.Flow) (ret bool, show bool) {
 
 func main() {
 	// parse profile "example-profile.yaml"
-	profile, err := parse.ParseProfile("example-profile.yaml")
+	profile, err := parse.ProfileFromYAML("example-profile.yaml")
 	if err != nil {
 		panic(err)
 	}
