@@ -55,13 +55,18 @@ var jsonTypes = map[string]func(msg *json.RawMessage) (Flow, error){
 	},
 }
 
+///
+
 // Duration is required since we cannot simply unmarshal `time.Duration`
+// https://stackoverflow.com/a/54571600/10564458
 type Duration time.Duration
 
+// MarshalJSON marshals a time.Duration into JSON
 func (d *Duration) MarshalJSON() ([]byte, error) {
 	return json.Marshal(time.Duration(*d).String())
 }
 
+// UnmarshalJSON un-marshals a time.Duration from JSON
 func (d *Duration) UnmarshalJSON(b []byte) error {
 	var v interface{}
 	if err := json.Unmarshal(b, &v); err != nil {
@@ -82,6 +87,8 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 		return errors.New("invalid duration")
 	}
 }
+
+///
 
 func (f *Flows) UnmarshalJSON(data []byte) error {
 	// fmt.Println("called unmarshal json with data", string(data))
