@@ -1,33 +1,8 @@
 package model
 
-import (
-	"gopkg.in/yaml.v3"
-)
-
-type Flows []Flow
-
-func (f *Flows) UnmarshalJSON(data []byte) error {
-	return nil
-}
-
-func (f *Flows) UnmarshalYAML(value *yaml.Node) error {
-	return nil
-}
-
 // Flow can represent an action, a condition or a return statement
 type Flow interface {
 	KeyIdentifier() string
-}
-
-// ConditionFlow represents a condition
-type ConditionFlow struct {
-	Condition string `yaml:"if"`
-	Then      []Flow `yaml:"then"`
-	Else      []Flow `yaml:"else"`
-}
-
-func (c *ConditionFlow) KeyIdentifier() string {
-	return "if"
 }
 
 // ActionFlow represents an action to run more flows
@@ -40,6 +15,17 @@ func (a *ActionFlow) KeyIdentifier() string {
 	return "do"
 }
 
+// ConditionFlow represents a condition
+type ConditionFlow struct {
+	Condition string `yaml:"if"`
+	Then      Flows  `yaml:"then"`
+	Else      Flows  `yaml:"else"`
+}
+
+func (c *ConditionFlow) KeyIdentifier() string {
+	return "if"
+}
+
 // ReturnFlow stops the current execution immediately
 type ReturnFlow struct {
 }
@@ -50,7 +36,7 @@ func (r *ReturnFlow) KeyIdentifier() string {
 
 // DebugFlow prints a message in the console
 type DebugFlow struct {
-	Message interface{}
+	Debug interface{}
 }
 
 func (d *DebugFlow) KeyIdentifier() string {

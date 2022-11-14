@@ -23,7 +23,7 @@ flows:
     - debug: 'ok schade'
 
   # flows are executed in order
-  # so first, all all events are removed from the calendar
+  # so first, all events are removed from the calendar
   # using the `filters/filter-out` flow
 
   # filter all events out
@@ -48,6 +48,8 @@ flows:
 
   # if event takes place on weekends,
   # do not execute any other following flows and exit current filter profile
+
+  - whale: yes
 
   - if: 'Date.isWeekend()'
     then:

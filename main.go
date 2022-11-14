@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/ralf-life/engine/model"
-	"github.com/ralf-life/engine/parse"
+	"os"
 )
 
 type ContextFlow struct {
@@ -19,7 +19,7 @@ func (c *ContextFlow) run(flow model.Flow) (ret bool, show bool) {
 		ret = true
 		return
 	case *model.DebugFlow:
-		fmt.Println("[DEBUG]", f.Message)
+		fmt.Println("[DEBUG]", f.Debug)
 	case *model.ConditionFlow:
 		// check condition
 		if f.Condition == "true" {
@@ -42,8 +42,14 @@ func (c *ContextFlow) run(flow model.Flow) (ret bool, show bool) {
 }
 
 func main() {
+	f, err := os.Open("example-profile.yaml")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
 	// parse profile "example-profile.yaml"
-	profile, err := parse.ProfileFromYAML("example-profile.yaml")
+	profile, err := model.ParseProfileFromYAML(f)
 	if err != nil {
 		panic(err)
 	}

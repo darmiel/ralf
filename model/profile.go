@@ -8,5 +8,5 @@ import (
 type Profile struct {
 	Name          string        `yaml:"name"`
 	CacheDuration time.Duration `yaml:"cache-duration"`
-	Flows         []Flow        `yaml:"flows"`
+	Flows         Flows         `yaml:"flows"`
 }
