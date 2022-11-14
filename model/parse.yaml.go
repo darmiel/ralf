@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"io"
+	"time"
 )
 
 type Flows []Flow
@@ -82,4 +83,29 @@ func yamlParseNode(node *yaml.Node) (Flow, error) {
 	}
 	// try to parse from func
 	return fun(node)
+}
+
+func (d *Duration) MarshalYAML() (interface{}, error) {
+	return yaml.Marshal(time.Duration(*d).String())
+}
+
+func (d *Duration) UnmarshalYAML(b *yaml.Node) error {
+	var v interface{}
+	if err := b.Decode(&v); err != nil {
+		return err
+	}
+	switch value := v.(type) {
+	case float64:
+		*d = Duration(time.Duration(value))
+		return nil
+	case string:
+		tmp, err := time.ParseDuration(value)
+		if err != nil {
+			return err
+		}
+		*d = Duration(tmp)
+		return nil
+	default:
+		return errors.New("invalid duration")
+	}
 }

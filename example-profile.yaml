@@ -8,20 +8,6 @@ cache-duration: 5m
 
 # requested flows
 flows:
-  # `flows` contains an implicit `if: true`
-  - if: 'true'
-    then:
-    - debug: "true 1 ok"
-    - if: 'true'
-      then:
-      - return
-      - debug: 'true 2 ok'
-      - if: 'true'
-        then:
-        - debug: 'true 3 ok'
-    else:
-    - debug: 'ok schade'
-
   # flows are executed in order
   # so first, all events are removed from the calendar
   # using the `filters/filter-out` flow
@@ -52,8 +38,10 @@ flows:
   - if: 'Date.isWeekend()'
     then:
       - return
-    else:
-      - return
+
+  - if: 'true'
+    then:
+      - do: filters/filter-in
 
   # Conditions can access the `Date` object from the current event.
   # `isAfter` can be used to check if an event is after a specified time.

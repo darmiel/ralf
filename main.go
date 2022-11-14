@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/ralf-life/engine/actions"
 	"github.com/ralf-life/engine/engine"
 	"github.com/ralf-life/engine/model"
 	"io"
@@ -30,15 +31,15 @@ func testJson(reader io.Reader) *model.Profile {
 }
 
 func main() {
-	f, err := os.Open("example-profile.json")
+	f, err := os.Open("example-profile.yaml")
 	if err != nil {
 		panic(err)
 	}
 	defer f.Close()
 
 	var profile *model.Profile
-	// profile = testYaml(f)
-	profile = testJson(f)
+	profile = testYaml(f)
+	// profile = testJson(f)
 
 	if profile == nil {
 		fmt.Println("profile was nil.")
@@ -48,8 +49,10 @@ func main() {
 	fmt.Printf("%+v\n", profile)
 	cp := engine.ContextFlow{Profile: profile, Context: make(map[string]interface{})}
 
+	var fact actions.ActionMessage
+
 	fmt.Println("--------------------------------------")
-	err = cp.RunCycleFlows(profile.Flows)
+	fact, err = cp.RunAllFlows(nil, profile.Flows)
 	fmt.Println("--------------------------------------")
 
 	if err != nil {
@@ -58,5 +61,12 @@ func main() {
 		} else {
 			fmt.Println("!!> flows failed:", err)
 		}
+	}
+
+	switch fact.(type) {
+	case actions.FilterInMessage:
+		fmt.Println("--> FILTER IN")
+	case actions.FilterOutMessage:
+		fmt.Println("--> FILTER OUT")
 	}
 }
