@@ -7,8 +7,8 @@ type Flow interface {
 
 // ActionFlow represents an action to run more flows
 type ActionFlow struct {
-	FlowIdentifier string                 `yaml:"do"`
-	With           map[string]interface{} `yaml:"with"`
+	FlowIdentifier string                 `yaml:"do" json:"do"`
+	With           map[string]interface{} `yaml:"with" json:"with"`
 }
 
 func (a *ActionFlow) KeyIdentifier() string {
@@ -17,9 +17,9 @@ func (a *ActionFlow) KeyIdentifier() string {
 
 // ConditionFlow represents a condition
 type ConditionFlow struct {
-	Condition string `yaml:"if"`
-	Then      Flows  `yaml:"then"`
-	Else      Flows  `yaml:"else"`
+	Condition string `yaml:"if" json:"if"`
+	Then      Flows  `yaml:"then" json:"then"`
+	Else      Flows  `yaml:"else" json:"else"`
 }
 
 func (c *ConditionFlow) KeyIdentifier() string {
@@ -36,7 +36,7 @@ func (r *ReturnFlow) KeyIdentifier() string {
 
 // DebugFlow prints a message in the console
 type DebugFlow struct {
-	Debug interface{}
+	Debug interface{} `yaml:"debug" json:"debug"`
 }
 
 func (d *DebugFlow) KeyIdentifier() string {

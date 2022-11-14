@@ -19,13 +19,11 @@ func ParseProfileFromYAML(reader io.Reader) (*Profile, error) {
 }
 
 func (f *Flows) UnmarshalYAML(value *yaml.Node) error {
-	fmt.Println("called unmarshalYAML with", value)
 	for _, child := range value.Content {
 		flow, err := yamlParseNode(child)
 		if err != nil {
 			return err
 		}
-		fmt.Println("  parsed", flow)
 		*f = append(*f, flow)
 	}
 	return nil
@@ -58,7 +56,7 @@ var yamlTags = map[string]func(node *yaml.Node) (Flow, error){
 				return Return, nil
 			}
 		}
-		return nil, nil
+		return nil, errors.New("unknown string type: " + node.Value)
 	},
 	"!!map": func(node *yaml.Node) (Flow, error) {
 		var (
