@@ -100,5 +100,15 @@ func (d *DemoServer) routeProcess(ctx *fiber.Ctx) error {
 	}
 
 	cal.Components = cc
-	return ctx.Status(201).SendString(cal.Serialize())
+
+	var bob strings.Builder
+	for _, dbg := range cp.Debugs {
+		bob.WriteString(fmt.Sprintf("debug: %+v", dbg))
+		bob.WriteRune('\n')
+	}
+	if bob.Len() > 0 {
+		bob.WriteRune('\n')
+	}
+	bob.WriteString(cal.Serialize())
+	return ctx.Status(201).SendString(bob.String())
 }
