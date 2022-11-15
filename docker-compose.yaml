@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  redis:
+    image: redis
+  engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:1887:1887"

@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-var client = req.C().SetTimeout(2 * time.Second)
+var client = req.C().SetTimeout(5 * time.Second)
 
 func (d *DemoServer) getSourceWithRequest(url string, cache time.Duration) (string, error) {
 	// request source

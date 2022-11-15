@@ -59,6 +59,10 @@ func (c *ctxTime) IsSaturday() bool {
 	return c.Weekday() == time.Saturday
 }
 
+func (c *ctxTime) IsSunday() bool {
+	return c.Weekday() == time.Sunday
+}
+
 func parseTime(time string) (hour, min int, ok bool) {
 	var hourS, minS string
 	if strings.Contains(time, ":") {
