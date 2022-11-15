@@ -21,3 +21,7 @@ type QueueMessage struct {
 type FilterMessage struct {
 	Action actions.ActionMessage
 }
+
+type DebugMessage struct {
+	Message interface{}
+}

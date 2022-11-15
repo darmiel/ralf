@@ -3,15 +3,20 @@ package engine
 import (
 	"errors"
 	"fmt"
+	"github.com/antonmedv/expr"
 	ics "github.com/arran4/golang-ical"
 	"github.com/ralf-life/engine/actions"
 	"github.com/ralf-life/engine/model"
+	"strings"
 )
 
 type ContextFlow struct {
 	*model.Profile
 	Context map[string]interface{}
+	Debugs  []interface{}
 }
+
+var dummyContextEnv = &ContextEnv{}
 
 func (c *ContextFlow) RunSingleFlow(event *ics.VEvent, flow model.Flow) (ExecutionMessage, error) {
 	switch f := flow.(type) {
@@ -24,17 +29,45 @@ func (c *ContextFlow) RunSingleFlow(event *ics.VEvent, flow model.Flow) (Executi
 	// DebugFlow:
 	// Print message to console
 	case *model.DebugFlow:
-		fmt.Println("[DEBUG]", f.Debug)
-		return nil, nil
+		if str, ok := f.Debug.(string); ok {
+			// ${Date} is ${Date.IsAfter("9:00")}
+			if strings.HasPrefix(str, "$ ") {
+				ex, err := expr.Compile(str[2:], expr.Env(dummyContextEnv))
+				if err != nil {
+					return nil, err
+				}
+				env, err := c.CreateEnv(event)
+				if err != nil {
+					return nil, err
+				}
+				res, err := expr.Run(ex, env)
+				if err != nil {
+					return nil, err
+				}
+				return &DebugMessage{Message: res}, nil
+			}
+		}
+		return &DebugMessage{f.Debug}, nil
 
 	// ConditionFlow:
 	// Check condition and execute child flows
 	case *model.ConditionFlow:
-		var out bool
-		// TODO: execute condition
-		out = f.Condition == "true"
+		fmt.Println("[EXPR] Compiling and executing", f.Condition)
+		ex, err := expr.Compile(f.Condition, expr.Env(dummyContextEnv), expr.AsBool())
+		if err != nil {
+			return nil, err
+		}
+		env, err := c.CreateEnv(event)
+		if err != nil {
+			return nil, err
+		}
+		res, err := expr.Run(ex, env)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println("  -> [EXPR] Got:", res)
 		// queue flow children
-		if out {
+		if res.(bool) {
 			return &QueueMessage{f.Then}, nil
 		} else {
 			return &QueueMessage{f.Else}, nil
@@ -91,7 +124,9 @@ func (c *ContextFlow) runCycleFlows(fact *actions.ActionMessage, event *ics.VEve
 			}
 		case *FilterMessage:
 			*fact = t.Action
-			fmt.Printf("[FILTER] Changed state to %T\n", t.Action)
+		case *DebugMessage:
+			fmt.Println("[DEBUG]", t.Message)
+			c.Debugs = append(c.Debugs, t.Message)
 		}
 	}
 	return nil

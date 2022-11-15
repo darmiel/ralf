@@ -34,6 +34,14 @@ func (r *ReturnFlow) KeyIdentifier() string {
 	return "return"
 }
 
+func (r *ReturnFlow) MarshalJSON() ([]byte, error) {
+	return []byte("return"), nil
+}
+
+func (r *ReturnFlow) MarshalYAML() (interface{}, error) {
+	return "return", nil
+}
+
 // DebugFlow prints a message in the console
 type DebugFlow struct {
 	Debug interface{} `yaml:"debug" json:"debug"`
