@@ -1,14 +1,40 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	ics "github.com/arran4/golang-ical"
+	"github.com/go-redis/redis/v9"
 	"github.com/ralf-life/engine/actions"
 	"github.com/ralf-life/engine/engine"
 	"github.com/ralf-life/engine/model"
+	"github.com/ralf-life/engine/server"
 	"io"
 	"os"
 )
+
+func main() {
+	// connect to redis
+	var rc *redis.Client
+
+	// use mock client for development
+	rc = redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+
+	if err := rc.Ping(context.TODO()).Err(); err != nil {
+		panic(err)
+	}
+
+	demo := server.New(rc)
+	if err := demo.Start(); err != nil {
+		panic(err)
+	}
+}
+
+///
 
 func testYaml(reader io.Reader) *model.Profile {
 	// parse profile "example-profile.yaml"
@@ -31,7 +57,7 @@ func testJson(reader io.Reader) *model.Profile {
 	return profile
 }
 
-func main() {
+func localTest() {
 	f, err := os.Open("example-profile.yaml")
 	if err != nil {
 		panic(err)
