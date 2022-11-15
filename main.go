@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	ics "github.com/arran4/golang-ical"
 	"github.com/ralf-life/engine/actions"
 	"github.com/ralf-life/engine/engine"
 	"github.com/ralf-life/engine/model"
@@ -46,27 +47,45 @@ func main() {
 		return
 	}
 
-	fmt.Printf("%+v\n", profile)
+	// read ics file
+	cf, err := os.Open("TINF21B2.ics")
+	if err != nil {
+		panic(err)
+	}
+	defer cf.Close()
+	cal, err := ics.ParseCalendar(cf)
+	if err != nil {
+		panic(err)
+	}
+	cal.SetMethod(ics.MethodRequest)
+
 	cp := engine.ContextFlow{Profile: profile, Context: make(map[string]interface{})}
 
-	var fact actions.ActionMessage
+	// get components from calendar (events) and copy to slice for later modifications
+	cc := cal.Components[:]
 
-	fmt.Println("--------------------------------------")
-	fact, err = cp.RunAllFlows(nil, profile.Flows)
-	fmt.Println("--------------------------------------")
-
-	if err != nil {
-		if err == engine.ErrExited {
-			fmt.Println("--> flows exited because of a return statement.")
-		} else {
-			fmt.Println("!!> flows failed:", err)
+	// start from behind so we can remove from slice
+	for i := len(cc) - 1; i >= 0; i-- {
+		event, ok := cc[i].(*ics.VEvent)
+		if !ok {
+			continue
+		}
+		var fact actions.ActionMessage
+		fact, err = cp.RunAllFlows(event, profile.Flows)
+		if err != nil {
+			if err == engine.ErrExited {
+				fmt.Println("--> flows exited because of a return statement.")
+			} else {
+				fmt.Println("!!> flows failed:", err)
+			}
+		}
+		switch fact.(type) {
+		case actions.FilterOutMessage:
+			cc = append(cc[:i], cc[i+1:]...) // remove event from components
+			fmt.Println("--> FILTER OUT")
 		}
 	}
 
-	switch fact.(type) {
-	case actions.FilterInMessage:
-		fmt.Println("--> FILTER IN")
-	case actions.FilterOutMessage:
-		fmt.Println("--> FILTER OUT")
-	}
+	cal.Components = cc
+	// fmt.Println(cal.Serialize())
 }

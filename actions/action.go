@@ -1,6 +1,10 @@
 package actions
 
-import ics "github.com/arran4/golang-ical"
+import (
+	"errors"
+	"fmt"
+	ics "github.com/arran4/golang-ical"
+)
 
 var Actions = []Action{
 	&FilterInAction{},
@@ -30,4 +34,29 @@ type (
 	FilterInMessage  byte
 )
 
-var ()
+func required[T any](with map[string]interface{}, key string) (T, error) {
+	ifa, ok := with[key]
+	if !ok {
+		var n T
+		return n, errors.New(fmt.Sprintf("'%s' required.", key))
+	}
+	val, ok := ifa.(T)
+	if !ok {
+		var n T
+		return n, errors.New(fmt.Sprintf("'%s' has an invalid type", key))
+	}
+	return val, nil
+}
+
+func optional[T any](with map[string]interface{}, key string, def T) (T, error) {
+	ifa, ok := with[key]
+	if !ok {
+		return def, nil
+	}
+	val, ok := ifa.(T)
+	if !ok {
+		var n T
+		return n, errors.New(fmt.Sprintf("'%s' must be a %T", key, def))
+	}
+	return val, nil
+}
