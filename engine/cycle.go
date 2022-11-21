@@ -52,23 +52,46 @@ func (c *ContextFlow) RunSingleFlow(event *ics.VEvent, flow model.Flow) (Executi
 	// ConditionFlow:
 	// Check condition and execute child flows
 	case *model.ConditionFlow:
-		ex, err := expr.Compile(f.Condition, expr.Env(dummyContextEnv), expr.AsBool())
-		if err != nil {
-			return nil, err
-		}
 		env, err := c.CreateEnv(event)
 		if err != nil {
 			return nil, err
 		}
-		res, err := expr.Run(ex, env)
-		if err != nil {
-			return nil, err
+
+		result := false
+		for _, cond := range f.Condition {
+			ex, err := expr.Compile(cond, expr.Env(dummyContextEnv), expr.AsBool())
+			if err != nil {
+				return nil, err
+			}
+			fmt.Println("checking", cond)
+			res, err := expr.Run(ex, env)
+			if err != nil {
+				return nil, err
+			}
+
+			isOr := strings.ToUpper(f.Operator) != "AND"
+
+			// or-conditions
+			if isOr {
+				// any condition must be true
+				if res.(bool) {
+					return &QueueMessage{f.Then}, nil
+				}
+				continue
+			}
+
+			// and-conditions
+			// if it's false, execute the Else-conditions,
+			// otherwise save result to the end
+			if !res.(bool) {
+				return &QueueMessage{f.Else}, nil
+			} else {
+				// mark condition to be true at least one time
+				result = true
+			}
 		}
-		// queue flow children
-		if res.(bool) {
+		if result {
 			return &QueueMessage{f.Then}, nil
-		} else {
-			return &QueueMessage{f.Else}, nil
 		}
 
 	case *model.ActionFlow:
