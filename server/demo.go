@@ -21,7 +21,8 @@ func New(rc *redis.Client) *DemoServer {
 		red: rc,
 	}
 
-	app.Post("/process", d.routeProcess)
+	app.Post("/process", d.routeProcessPost)
+	app.Get("/process", d.routeProcessGet)
 
 	return d
 }

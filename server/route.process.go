@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	ics "github.com/arran4/golang-ical"
 	"github.com/go-redis/redis/v9"
@@ -16,7 +17,8 @@ import (
 	"time"
 )
 
-var client = req.C().SetTimeout(5 * time.Second)
+// client requests the source URLs
+var client = req.C().SetTimeout(10 * time.Second)
 
 func (d *DemoServer) getSourceWithRequest(url string, cache time.Duration) (string, error) {
 	// request source
@@ -42,11 +44,10 @@ func (d *DemoServer) getSource(url string, cache time.Duration) (string, error) 
 	return body, err
 }
 
-func (d *DemoServer) routeProcess(ctx *fiber.Ctx) error {
-
+func (d *DemoServer) routeProcessDo(content []byte, ctx *fiber.Ctx) error {
 	// try to parse body
 	var profile model.Profile
-	dec := yaml.NewDecoder(bytes.NewReader(ctx.Body()))
+	dec := yaml.NewDecoder(bytes.NewReader(content))
 	dec.KnownFields(true)
 	if err := dec.Decode(&profile); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid RALF-SPEC ("+err.Error()+")")
@@ -54,8 +55,8 @@ func (d *DemoServer) routeProcess(ctx *fiber.Ctx) error {
 
 	// require a cache duration of 60s
 	cd := time.Duration(profile.CacheDuration)
-	if cd.Minutes() < 1.0 {
-		cd = time.Minute
+	if cd.Minutes() < 2.0 {
+		cd = 2 * time.Minute
 	}
 
 	body, err := d.getSource(profile.Source, cd)
@@ -111,4 +112,20 @@ func (d *DemoServer) routeProcess(ctx *fiber.Ctx) error {
 	}
 	bob.WriteString(cal.Serialize())
 	return ctx.Status(201).SendString(bob.String())
+}
+
+func (d *DemoServer) routeProcessGet(ctx *fiber.Ctx) error {
+	q := ctx.Query("tpl")
+	if q == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "`tpl` (base64) parameter missing.")
+	}
+	content, err := base64.StdEncoding.DecodeString(q)
+	if err != nil {
+		return fiber.NewError(fiber.StatusExpectationFailed, "invalid base64 ("+err.Error()+")")
+	}
+	return d.routeProcessDo(content, ctx)
+}
+
+func (d *DemoServer) routeProcessPost(ctx *fiber.Ctx) error {
+	return d.routeProcessDo(ctx.Body(), ctx)
 }

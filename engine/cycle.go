@@ -52,7 +52,6 @@ func (c *ContextFlow) RunSingleFlow(event *ics.VEvent, flow model.Flow) (Executi
 	// ConditionFlow:
 	// Check condition and execute child flows
 	case *model.ConditionFlow:
-		fmt.Println("[EXPR] Compiling and executing", f.Condition)
 		ex, err := expr.Compile(f.Condition, expr.Env(dummyContextEnv), expr.AsBool())
 		if err != nil {
 			return nil, err
@@ -65,7 +64,6 @@ func (c *ContextFlow) RunSingleFlow(event *ics.VEvent, flow model.Flow) (Executi
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println("  -> [EXPR] Got:", res)
 		// queue flow children
 		if res.(bool) {
 			return &QueueMessage{f.Then}, nil
