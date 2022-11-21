@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/antonmedv/expr"
-	ics "github.com/arran4/golang-ical"
 	"github.com/ralf-life/engine/actions"
+	"github.com/ralf-life/engine/ext/ics"
 	"github.com/ralf-life/engine/model"
 	"strings"
 )
