@@ -1,8 +1,6 @@
 package actions
 
-import (
-	ics "github.com/arran4/golang-ical"
-)
+import ics "github.com/darmiel/golang-ical"
 
 type FilterInAction struct{}
 

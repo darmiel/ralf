@@ -3,7 +3,7 @@ package actions
 import (
 	"errors"
 	"fmt"
-	ics "github.com/arran4/golang-ical"
+	ics "github.com/darmiel/golang-ical"
 	"regexp"
 	"strconv"
 	"strings"

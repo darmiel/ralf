@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	ics "github.com/arran4/golang-ical"
+	"github.com/darmiel/golang-ical"
 	"github.com/go-redis/redis/v9"
 	"github.com/gofiber/fiber/v2"
 	"github.com/imroc/req/v3"

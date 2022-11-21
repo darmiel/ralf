@@ -2,7 +2,7 @@ package engine
 
 import (
 	"fmt"
-	ics "github.com/arran4/golang-ical"
+	ics "github.com/darmiel/golang-ical"
 	"strconv"
 	"strings"
 	"time"

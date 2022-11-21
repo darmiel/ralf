@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	ics "github.com/arran4/golang-ical"
+	ics "github.com/darmiel/golang-ical"
 	"github.com/ralf-life/engine/actions"
 	"github.com/ralf-life/engine/engine"
 	"github.com/ralf-life/engine/model"

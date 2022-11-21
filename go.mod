@@ -3,7 +3,8 @@ module github.com/ralf-life/engine
 go 1.19
 
 require (
-	github.com/arran4/golang-ical v0.0.0-20220517104411-fd89fefb0182
+	github.com/antonmedv/expr v1.9.0
+	github.com/darmiel/golang-ical v0.0.0-20221121153313-bd526fc4018d
 	github.com/go-redis/redis/v9 v9.0.0-rc.1
 	github.com/gofiber/fiber/v2 v2.39.0
 	github.com/imroc/req/v3 v3.25.0
@@ -12,7 +13,6 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
-	github.com/antonmedv/expr v1.9.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
