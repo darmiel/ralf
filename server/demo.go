@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/go-redis/redis/v9"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 type DemoServer struct {
@@ -21,9 +22,13 @@ func New(rc *redis.Client) *DemoServer {
 		red: rc,
 	}
 
+	app.Post("/tools/minify", d.routeMinifyYaml)
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+	}))
 	app.Post("/process", d.routeProcessPost)
 	app.Get("/process", d.routeProcessGet)
-	app.Post("/tools/minify", d.routeMinifyYaml)
 
 	return d
 }
