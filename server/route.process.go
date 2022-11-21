@@ -53,6 +53,11 @@ func (d *DemoServer) routeProcessDo(content []byte, ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid RALF-SPEC ("+err.Error()+")")
 	}
 
+	// validate profile
+	if strings.TrimSpace(profile.Source) == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "`source` required")
+	}
+
 	// require a cache duration of 60s
 	cd := time.Duration(profile.CacheDuration)
 	if cd.Minutes() < 2.0 {

@@ -23,6 +23,7 @@ func New(rc *redis.Client) *DemoServer {
 
 	app.Post("/process", d.routeProcessPost)
 	app.Get("/process", d.routeProcessGet)
+	app.Post("/tools/minify", d.routeMinifyYaml)
 
 	return d
 }
