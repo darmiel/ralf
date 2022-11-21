@@ -98,8 +98,10 @@ func (property *BaseProperty) serialize(w io.Writer) {
 				fmt.Fprint(b, ",")
 			}
 			if strings.ContainsAny(v, ";:\\\",") {
-				v = strings.Replace(v, "\"", "\\\"", -1)
+				v = strings.Replace(v, ";", "\\;", -1)
+				v = strings.Replace(v, ":", "\\:", -1)
 				v = strings.Replace(v, "\\", "\\\\", -1)
+				v = strings.Replace(v, "\"", "\\\"", -1)
 				v = strings.Replace(v, ",", "\\,", -1)
 			}
 			fmt.Fprint(b, v)
