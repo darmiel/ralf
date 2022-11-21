@@ -74,7 +74,6 @@ func (d *DemoServer) routeProcessDo(content []byte, ctx *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusExpectationFailed, "failed to parse source calendar ("+err.Error()+")")
 	}
-	cal.SetMethod(ics.MethodRequest)
 
 	cp := engine.ContextFlow{
 		Profile: &profile,
