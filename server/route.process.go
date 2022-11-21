@@ -116,6 +116,8 @@ func (d *DemoServer) routeProcessDo(content []byte, ctx *fiber.Ctx) error {
 		bob.WriteRune('\n')
 	}
 	bob.WriteString(cal.Serialize())
+
+	ctx.Set("Content-Type", "text/calendar")
 	return ctx.Status(201).SendString(bob.String())
 }
 
