@@ -63,7 +63,6 @@ func (c *ContextFlow) RunSingleFlow(event *ics.VEvent, flow model.Flow) (Executi
 			if err != nil {
 				return nil, err
 			}
-			fmt.Println("checking", cond)
 			res, err := expr.Run(ex, env)
 			if err != nil {
 				return nil, err
