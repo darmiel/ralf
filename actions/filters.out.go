@@ -12,6 +12,6 @@ func (foa *FilterOutAction) Identifier() string {
 
 var DummyFilterOutMessage = FilterOutMessage(0)
 
-func (foa *FilterOutAction) Execute(_ *ics.VEvent, _ map[string]interface{}) (ActionMessage, error) {
+func (foa *FilterOutAction) Execute(_ *ics.VEvent, _ map[string]interface{}, _ bool) (ActionMessage, error) {
 	return DummyFilterOutMessage, nil
 }

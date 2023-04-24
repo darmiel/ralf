@@ -67,7 +67,7 @@ func mapToKV(m map[string][]string) []ics.PropertyParameter {
 	return res
 }
 
-func (rra *RegexReplaceAction) Execute(event *ics.VEvent, with map[string]interface{}) (ActionMessage, error) {
+func (rra *RegexReplaceAction) Execute(event *ics.VEvent, with map[string]interface{}, verbose bool) (ActionMessage, error) {
 	match, err := required[string](with, "match")
 	if err != nil {
 		return nil, err
@@ -150,8 +150,10 @@ func (rra *RegexReplaceAction) Execute(event *ics.VEvent, with map[string]interf
 			for i, v := range values {
 				upd := patternReplace(v, repl, pattern)
 				if upd != v {
-					fmt.Printf("[actions/regex-replace] ~Parameter[%s] '%s' --> '%s'\n",
-						param, v, upd)
+					if verbose {
+						fmt.Printf("[actions/regex-replace] ~Parameter[%s] '%s' --> '%s'\n",
+							param, v, upd)
+					}
 					values[i] = upd
 					save = true
 				}
@@ -167,8 +169,10 @@ func (rra *RegexReplaceAction) Execute(event *ics.VEvent, with map[string]interf
 
 			// only print if something changed
 			if val.Value != upd {
-				fmt.Printf("[actions/regex-replace] ~Parameter(%s) '%s' --> '%s'\n",
-					strings.ToUpper(s), val.Value, upd)
+				if verbose {
+					fmt.Printf("[actions/regex-replace] ~Parameter(%s) '%s' --> '%s'\n",
+						strings.ToUpper(s), val.Value, upd)
+				}
 				save = true
 			}
 		}

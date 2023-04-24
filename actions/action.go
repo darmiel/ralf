@@ -23,7 +23,7 @@ func Find(identifier string) Action {
 
 type Action interface {
 	Identifier() string
-	Execute(event *ics.VEvent, with map[string]interface{}) (ActionMessage, error)
+	Execute(event *ics.VEvent, with map[string]interface{}, verbose bool) (ActionMessage, error)
 }
 
 type ActionMessage interface {

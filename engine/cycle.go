@@ -12,8 +12,10 @@ import (
 
 type ContextFlow struct {
 	*model.Profile
-	Context map[string]interface{}
-	Debugs  []interface{}
+	Context     map[string]interface{}
+	EnableDebug bool
+	Verbose     bool
+	Debugs      []interface{}
 }
 
 var dummyContextEnv = &ContextEnv{}
@@ -29,6 +31,10 @@ func (c *ContextFlow) RunSingleFlow(event *ics.VEvent, flow model.Flow) (Executi
 	// DebugFlow:
 	// Print message to console
 	case *model.DebugFlow:
+		if !c.EnableDebug {
+			return nil, nil
+		}
+
 		if str, ok := f.Debug.(string); ok {
 			// ${Date} is ${Date.IsAfter("9:00")}
 			if strings.HasPrefix(str, "$ ") {
@@ -58,6 +64,8 @@ func (c *ContextFlow) RunSingleFlow(event *ics.VEvent, flow model.Flow) (Executi
 		}
 
 		result := false
+		isAnd := !(strings.ToUpper(f.Operator) == "AND")
+
 		for _, cond := range f.Condition {
 			ex, err := expr.Compile(cond, expr.Env(dummyContextEnv), expr.AsBool())
 			if err != nil {
@@ -67,31 +75,17 @@ func (c *ContextFlow) RunSingleFlow(event *ics.VEvent, flow model.Flow) (Executi
 			if err != nil {
 				return nil, err
 			}
-
-			isOr := strings.ToUpper(f.Operator) != "AND"
-
-			// or-conditions
-			if isOr {
-				// any condition must be true
-				if res.(bool) {
-					return &QueueMessage{f.Then}, nil
-				}
-				continue
-			}
-
-			// and-conditions
-			// if it's false, execute the Else-conditions,
-			// otherwise save result to the end
-			if !res.(bool) {
-				return &QueueMessage{f.Else}, nil
-			} else {
-				// mark condition to be true at least one time
+			if !res.(bool) && isAnd {
+				result = false
+				break
+			} else if res.(bool) {
 				result = true
 			}
 		}
-		if result {
-			return &QueueMessage{f.Then}, nil
+		if !result {
+			return &QueueMessage{f.Else}, nil
 		}
+		return &QueueMessage{f.Then}, nil
 
 	case *model.ActionFlow:
 		// find action
@@ -99,7 +93,7 @@ func (c *ContextFlow) RunSingleFlow(event *ics.VEvent, flow model.Flow) (Executi
 		if act == nil {
 			return nil, errors.New("invalid flow identifier: " + f.FlowIdentifier)
 		}
-		msg, err := act.Execute(event, f.With)
+		msg, err := act.Execute(event, f.With, c.Verbose)
 		if err != nil {
 			return nil, err
 		}
