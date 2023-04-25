@@ -9,6 +9,15 @@ import (
 	"strings"
 )
 
+var (
+	ErrNoReplacerSpecified          = errors.New("specify replacers with either `match` and `replace` or `map`")
+	ErrInvalidReplacementMapNotList = errors.New("invalid replacement-map, should be a list")
+	ErrInvalidReplacementMapNotMap  = errors.New("invalid replacement-map, should contain at least 1 element")
+	ErrInvalidReplacementMapNotKey  = errors.New("invalid replacement-map, should contain `match` and `replace`")
+)
+
+const CaseSensitiveKey = "case-sensitive"
+
 type RegexReplaceAction struct{}
 
 func (rra *RegexReplaceAction) Identifier() string {
@@ -17,17 +26,26 @@ func (rra *RegexReplaceAction) Identifier() string {
 
 ///
 
-// patternReplace replaces all occurrences of the pattern in the orig string.
+type mapReplacers struct {
+	// Match matches a string based on a regular expression
+	Match string
+	// Replacement is the replacement (can contain group-placeholders like $1, $2, ...)
+	Replacement string
+	// Pattern is the compiled Match-Pattern and filled later
+	Pattern *regexp.Regexp
+}
+
+// Do replaces all occurrences of the pattern in the orig string.
 // The replacement can contain ${i} to replace with sub-match.
 // TODO: Fix this, it doesn't work correctly.
 // Hello! with match = (?i)(?:H(e)llo)|(?:Wo(r)ld), repl = [$1] should output [e]
 // but it doesn't.
-func patternReplace(orig, replacement string, pattern *regexp.Regexp) string {
+func (m *mapReplacers) Do(orig string) string {
 	// plain replace
-	repl := pattern.ReplaceAllString(orig, replacement)
+	repl := m.Pattern.ReplaceAllString(orig, m.Replacement)
 	// advanced replace with $1, $2, ...
-	if strings.Contains(replacement, "$") {
-		sub := pattern.FindAllStringSubmatch(orig, 10)
+	if strings.Contains(m.Replacement, "$") {
+		sub := m.Pattern.FindAllStringSubmatch(orig, 10)
 		if len(sub) > 0 {
 			for i, v := range sub[0] {
 				repl = strings.ReplaceAll(repl, "$"+strconv.Itoa(i+1), v)
@@ -35,22 +53,6 @@ func patternReplace(orig, replacement string, pattern *regexp.Regexp) string {
 		}
 	}
 	return repl
-}
-
-func strArray(with map[string]interface{}, key string, def []interface{}) ([]string, error) {
-	in, err := optional[[]interface{}](with, key, def)
-	if err != nil {
-		return nil, err
-	}
-	var res = make([]string, len(in))
-	for i, v := range in {
-		str, ok := v.(string)
-		if !ok {
-			return nil, errors.New(fmt.Sprintf("'%v' is not a string", v))
-		}
-		res[i] = str
-	}
-	return res, nil
 }
 
 // wrap ICalParameters (map[string][]string) to ics.PropertyParameter
@@ -68,25 +70,70 @@ func mapToKV(m map[string][]string) []ics.PropertyParameter {
 }
 
 func (rra *RegexReplaceAction) Execute(event *ics.VEvent, with map[string]interface{}, verbose bool) (ActionMessage, error) {
-	match, err := required[string](with, "match")
+	// replace map
+	var replacers []*mapReplacers
+
+	globalCaseSensitive, err := optional[bool](with, CaseSensitiveKey, true)
 	if err != nil {
 		return nil, err
 	}
 
-	// replacement (can contain group-placeholders like $1, $2, ...)
-	repl, err := required[string](with, "replace")
-	if err != nil {
-		return nil, err
-	}
-
-	// if pattern was marked as not-case-sensitive
-	// append (?i) flag to pattern
-	cs, err := optional[bool](with, "case-sensitive", false)
-	if err != nil {
-		return nil, err
-	}
-	if !cs {
-		match = "(?i)" + match
+	if has(with, "match") && has(with, "replace") {
+		match, err := required[string](with, "match")
+		if err != nil {
+			return nil, err
+		}
+		repl, err := required[string](with, "replace")
+		if err != nil {
+			return nil, err
+		}
+		// if pattern was marked globally as not-case-sensitive
+		// append (?i) flag to pattern to sub-patterns
+		if !globalCaseSensitive {
+			match = "(?i)" + match
+		}
+		// single replacer
+		replacers = append(replacers, &mapReplacers{
+			Match:       match,
+			Replacement: repl,
+		})
+	} else if mapTypeRaw, ok := with["map"]; ok {
+		// m should be of type map[string]interface{}
+		mapRaw, ok := mapTypeRaw.([]interface{})
+		if !ok {
+			return nil, ErrInvalidReplacementMapNotList
+		}
+		for _, v := range mapRaw {
+			// should be a map
+			m, ok := v.(map[string]interface{})
+			if !ok {
+				return nil, ErrInvalidReplacementMapNotMap
+			}
+			if !has(m, "match") || !has(m, "replace") {
+				return nil, ErrInvalidReplacementMapNotKey
+			}
+			match, err := required[string](m, "match")
+			if err != nil {
+				return nil, err
+			}
+			repl, err := required[string](m, "replace")
+			if err != nil {
+				return nil, err
+			}
+			localCaseSensitive, err := optional[bool](m, CaseSensitiveKey, true)
+			if err != nil {
+				return nil, err
+			}
+			if !localCaseSensitive || (!globalCaseSensitive && !has(m, CaseSensitiveKey)) {
+				match = "(?i)" + match
+			}
+			replacers = append(replacers, &mapReplacers{
+				Match:       match,
+				Replacement: repl,
+			})
+		}
+	} else {
+		return nil, ErrNoReplacerSpecified
 	}
 
 	// if no "in" was specified, by default, replace in description
@@ -101,10 +148,12 @@ func (rra *RegexReplaceAction) Execute(event *ics.VEvent, with map[string]interf
 		return nil, err
 	}
 
-	// compile given RegEx pattern
-	pattern, err := regexp.Compile(match)
-	if err != nil {
-		return nil, err
+	// compile RegEx patterns
+	for _, v := range replacers {
+		if v.Pattern, err = regexp.Compile(v.Match); err != nil {
+			return nil, fmt.Errorf("cannot compile expression '%s': %v",
+				v.Match, err)
+		}
 	}
 
 	// execute replace
@@ -148,10 +197,13 @@ func (rra *RegexReplaceAction) Execute(event *ics.VEvent, with map[string]interf
 				continue ppp
 			}
 			for i, v := range values {
-				upd := patternReplace(v, repl, pattern)
+				upd := v
+				for _, r := range replacers {
+					upd = r.Do(upd)
+				}
 				if upd != v {
 					if verbose {
-						fmt.Printf("[actions/regex-replace] ~Parameter[%s] '%s' --> '%s'\n",
+						fmt.Printf("[actions/regex-replace] ~Param[%s] '%s' changed to '%s'\n",
 							param, v, upd)
 					}
 					values[i] = upd
@@ -165,12 +217,14 @@ func (rra *RegexReplaceAction) Execute(event *ics.VEvent, with map[string]interf
 		// read (and replace) property value itself
 		// if either no parameter was specified or the '+' flag was used.
 		if len(parameters) <= 0 || parametersIncludeSelf {
-			upd = patternReplace(val.Value, repl, pattern)
+			for _, r := range replacers {
+				upd = r.Do(upd)
+			}
 
 			// only print if something changed
 			if val.Value != upd {
 				if verbose {
-					fmt.Printf("[actions/regex-replace] ~Parameter(%s) '%s' --> '%s'\n",
+					fmt.Printf("[actions/regex-replace] ~Param+(%s) '%s' changed to '%s'\n",
 						strings.ToUpper(s), val.Value, upd)
 				}
 				save = true

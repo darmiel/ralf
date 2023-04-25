@@ -60,3 +60,24 @@ func optional[T any](with map[string]interface{}, key string, def T) (T, error) 
 	}
 	return val, nil
 }
+
+func has(with map[string]interface{}, key string) (ok bool) {
+	_, ok = with[key]
+	return
+}
+
+func strArray(with map[string]interface{}, key string, def []interface{}) ([]string, error) {
+	in, err := optional[[]interface{}](with, key, def)
+	if err != nil {
+		return nil, err
+	}
+	var res = make([]string, len(in))
+	for i, v := range in {
+		str, ok := v.(string)
+		if !ok {
+			return nil, errors.New(fmt.Sprintf("'%v' is not a string", v))
+		}
+		res[i] = str
+	}
+	return res, nil
+}
