@@ -9,10 +9,10 @@ import (
 )
 
 type ContextEnv struct {
-	Event *ctxEvent
-	Date  *ctxTime
-	Start *ctxTime
-	End   *ctxTime
+	Event *CtxEvent
+	Date  *CtxTime
+	Start *CtxTime
+	End   *CtxTime
 }
 
 func (e *ContextEnv) AORB(val bool, a, b string) string {
@@ -27,39 +27,39 @@ func (e *ContextEnv) String(obj any) string {
 }
 
 type (
-	ctxTime struct {
+	CtxTime struct {
 		*time.Time
 	}
-	ctxEvent struct {
+	CtxEvent struct {
 		*ics.VEvent
 	}
 )
 
-func (c *ctxTime) IsMonday() bool {
+func (c *CtxTime) IsMonday() bool {
 	return c.Weekday() == time.Monday
 }
 
-func (c *ctxTime) IsTuesday() bool {
+func (c *CtxTime) IsTuesday() bool {
 	return c.Weekday() == time.Tuesday
 }
 
-func (c *ctxTime) IsWednesday() bool {
+func (c *CtxTime) IsWednesday() bool {
 	return c.Weekday() == time.Wednesday
 }
 
-func (c *ctxTime) IsThursday() bool {
+func (c *CtxTime) IsThursday() bool {
 	return c.Weekday() == time.Thursday
 }
 
-func (c *ctxTime) IsFriday() bool {
+func (c *CtxTime) IsFriday() bool {
 	return c.Weekday() == time.Friday
 }
 
-func (c *ctxTime) IsSaturday() bool {
+func (c *CtxTime) IsSaturday() bool {
 	return c.Weekday() == time.Saturday
 }
 
-func (c *ctxTime) IsSunday() bool {
+func (c *CtxTime) IsSunday() bool {
 	return c.Weekday() == time.Sunday
 }
 
@@ -85,7 +85,7 @@ func parseTime(time string) (hour, min int, ok bool) {
 	return hour, min, true
 }
 
-func (c *ctxTime) IsAfter(time string) bool {
+func (c *CtxTime) IsAfter(time string) bool {
 	hr, min, ok := parseTime(time)
 	if !ok {
 		return false
@@ -95,30 +95,30 @@ func (c *ctxTime) IsAfter(time string) bool {
 
 ///
 
-func (e *ctxEvent) getProp(prop ics.ComponentProperty) string {
+func (e *CtxEvent) getProp(prop ics.ComponentProperty) string {
 	if v := e.GetProperty(prop); v != nil {
 		return v.Value
 	}
 	return ""
 }
 
-func (e *ctxEvent) Description() string {
+func (e *CtxEvent) Description() string {
 	return e.getProp(ics.ComponentPropertyDescription)
 }
 
-func (e *ctxEvent) Summary() string {
+func (e *CtxEvent) Summary() string {
 	return e.getProp(ics.ComponentPropertySummary)
 }
 
-func (e *ctxEvent) URL() string {
+func (e *CtxEvent) URL() string {
 	return e.getProp(ics.ComponentPropertyUrl)
 }
 
-func (e *ctxEvent) Categories() string {
+func (e *CtxEvent) Categories() string {
 	return e.getProp(ics.ComponentPropertyCategories)
 }
 
-func (e *ctxEvent) Location() string {
+func (e *CtxEvent) Location() string {
 	return e.getProp(ics.ComponentPropertyLocation)
 }
 
@@ -127,15 +127,15 @@ func (c *ContextFlow) CreateEnv(event *ics.VEvent) (*ContextEnv, error) {
 	if err != nil {
 		return nil, err
 	}
-	ctxStart := ctxTime{&start}
+	ctxStart := CtxTime{&start}
 
 	end, err := event.GetEndAt()
 	if err != nil {
 		return nil, err
 	}
-	ctxEnd := ctxTime{&end}
+	ctxEnd := CtxTime{&end}
 
-	ctxEv := ctxEvent{event}
+	ctxEv := CtxEvent{event}
 
 	return &ContextEnv{
 		Event: &ctxEv,
