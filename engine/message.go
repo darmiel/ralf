@@ -9,19 +9,19 @@ import (
 type ExecutionMessage interface {
 }
 
-// ExitMessage exists all flows
-type ExitMessage struct {
+// ExitFlowsExecutionMessage exists all flows
+type ExitFlowsExecutionMessage struct {
 }
 
-// QueueMessage adds more flows to execute
-type QueueMessage struct {
+// QueueFlowsExecutionMessage adds more flows to execute
+type QueueFlowsExecutionMessage struct {
 	Flows model.Flows
 }
 
-type FilterMessage struct {
+type FilterResultExecutionMessage struct {
 	Action actions.ActionMessage
 }
 
-type DebugMessage struct {
+type DebugExecutionMessage struct {
 	Message interface{}
 }

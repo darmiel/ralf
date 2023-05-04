@@ -9,7 +9,6 @@ import (
 	"github.com/go-redis/redis/v9"
 	"github.com/gofiber/fiber/v2"
 	"github.com/imroc/req/v3"
-	"github.com/ralf-life/engine/actions"
 	"github.com/ralf-life/engine/engine"
 	"github.com/ralf-life/engine/model"
 	"gopkg.in/yaml.v3"
@@ -58,7 +57,7 @@ func (d *DemoServer) routeProcessDo(content []byte, ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "`source` required")
 	}
 
-	// require a cache duration of 60s
+	// require a cache duration of at least 120s
 	cd := time.Duration(profile.CacheDuration)
 	if cd.Minutes() < 2.0 {
 		cd = 2 * time.Minute
@@ -75,49 +74,27 @@ func (d *DemoServer) routeProcessDo(content []byte, ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusExpectationFailed, "failed to parse source calendar ("+err.Error()+")")
 	}
 
-	cp := engine.ContextFlow{
-		Profile: &profile,
-		Context: make(map[string]interface{}),
+	// create context and run flow
+	cp := &engine.ContextFlow{
+		Profile:     &profile,
+		Context:     make(map[string]interface{}),
+		EnableDebug: true,
+		Verbose:     true,
+	}
+	if err = engine.ModifyCalendar(cp, profile.Flows, cal); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to run flow ("+err.Error()+")")
 	}
 
-	// get components from calendar (events) and copy to slice for later modifications
-	cc := cal.Components[:]
-
-	// start from behind so we can remove from slice
-	for i := len(cc) - 1; i >= 0; i-- {
-		event, ok := cc[i].(*ics.VEvent)
-		if !ok {
-			continue
-		}
-		var fact actions.ActionMessage
-		fact, err = cp.RunAllFlows(event, profile.Flows)
-		if err != nil {
-			if err == engine.ErrExited {
-				fmt.Println("--> flows exited because of a return statement.")
-			} else {
-				return fiber.NewError(fiber.StatusInternalServerError, "failed to run flow ("+err.Error()+")")
-			}
-		}
-		switch fact.(type) {
-		case actions.FilterOutMessage:
-			cc = append(cc[:i], cc[i+1:]...) // remove event from components
-		}
+	// append debug messages as header
+	debugMessages := make([]string, len(cp.Debugs))
+	for i, v := range cp.Debugs {
+		debugMessages[i] = fmt.Sprintf("%+v", v)
 	}
+	ctx.Append("X-Debug-Messages", debugMessages...)
 
-	cal.Components = cc
-
-	var bob strings.Builder
-	for _, dbg := range cp.Debugs {
-		bob.WriteString(fmt.Sprintf("debug: %+v", dbg))
-		bob.WriteRune('\n')
-	}
-	if bob.Len() > 0 {
-		bob.WriteRune('\n')
-	}
-	bob.WriteString(cal.Serialize())
-
+	// append content-type and return calendar
 	ctx.Set("Content-Type", "text/calendar")
-	return ctx.Status(201).SendString(bob.String())
+	return ctx.Status(201).SendString(cal.Serialize())
 }
 
 func (d *DemoServer) routeProcessGet(ctx *fiber.Ctx) error {

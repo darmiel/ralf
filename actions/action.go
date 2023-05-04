@@ -30,8 +30,8 @@ type ActionMessage interface {
 }
 
 type (
-	FilterOutMessage byte
-	FilterInMessage  byte
+	FilterOutActionMessage struct{}
+	FilterInActionMessage  struct{}
 )
 
 func required[T any](with map[string]interface{}, key string) (T, error) {

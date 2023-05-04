@@ -8,21 +8,21 @@ import (
 	"time"
 )
 
-type ContextEnv struct {
+type ExprEnvironment struct {
 	Event *CtxEvent
 	Date  *CtxTime
 	Start *CtxTime
 	End   *CtxTime
 }
 
-func (e *ContextEnv) AORB(val bool, a, b string) string {
+func (e *ExprEnvironment) AORB(val bool, a, b string) string {
 	if val {
 		return a
 	}
 	return b
 }
 
-func (e *ContextEnv) String(obj any) string {
+func (e *ExprEnvironment) String(obj any) string {
 	return fmt.Sprintf("%+v", obj)
 }
 
@@ -122,23 +122,23 @@ func (e *CtxEvent) Location() string {
 	return e.getProp(ics.ComponentPropertyLocation)
 }
 
-func (c *ContextFlow) CreateEnv(event *ics.VEvent) (*ContextEnv, error) {
+func CreateExprEnvironmentFromEvent(event *ics.VEvent) (*ExprEnvironment, error) {
 	start, err := event.GetStartAt()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get start at err: %v", err)
 	}
 	ctxStart := CtxTime{&start}
 
 	end, err := event.GetEndAt()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get end at err: %v", err)
 	}
 	ctxEnd := CtxTime{&end}
 
-	ctxEv := CtxEvent{event}
-
-	return &ContextEnv{
-		Event: &ctxEv,
+	return &ExprEnvironment{
+		Event: &CtxEvent{
+			VEvent: event,
+		},
 		Date:  &ctxStart,
 		Start: &ctxStart,
 		End:   &ctxEnd,

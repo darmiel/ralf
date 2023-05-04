@@ -86,7 +86,7 @@ func localTest() {
 			}
 		}
 		switch fact.(type) {
-		case actions.FilterOutMessage:
+		case actions.FilterOutActionMessage:
 			cc = append(cc[:i], cc[i+1:]...) // remove event from components
 			fmt.Println("--> FILTER OUT")
 		}

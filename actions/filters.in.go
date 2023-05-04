@@ -10,8 +10,6 @@ func (fia *FilterInAction) Identifier() string {
 
 ///
 
-var DummyFilterInMessage = FilterInMessage(1)
-
 func (fia *FilterInAction) Execute(_ *ics.VEvent, _ map[string]interface{}, _ bool) (ActionMessage, error) {
-	return DummyFilterInMessage, nil
+	return new(FilterInActionMessage), nil
 }

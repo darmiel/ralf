@@ -9,7 +9,6 @@ import (
 func (d *DemoServer) routeMinifyYaml(ctx *fiber.Ctx) error {
 	var cnt []*yaml.Node
 	if err := yaml.Unmarshal(ctx.Body(), &cnt); err != nil {
-		// TODO: close body?
 		return err
 	}
 	for _, c := range cnt {
