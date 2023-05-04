@@ -77,7 +77,7 @@ func localTest() {
 			continue
 		}
 		var fact actions.ActionMessage
-		fact, err = cp.RunAllFlows(event, profile.Flows)
+		fact, err = cp.RunMultiFlows(event, profile.Flows)
 		if err != nil {
 			if err == engine.ErrExited {
 				fmt.Println("--> flows exited because of a return statement.")

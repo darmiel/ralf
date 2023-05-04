@@ -28,12 +28,12 @@ func TestMixed(t *testing.T) {
 		// filters/filter-in doesn't need an Event to work
 		{
 			action:  "filters/filter-in",
-			message: DummyFilterInMessage,
+			message: new(FilterInActionMessage),
 		},
 		// filters/filter-out doesn't need an Event to work
 		{
 			action:  "filters/filter-out",
-			message: DummyFilterOutMessage,
+			message: new(FilterOutActionMessage),
 		},
 		{
 			action:  "actions/regex-replace",
