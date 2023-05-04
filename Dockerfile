@@ -13,7 +13,13 @@ COPY go.mod go.sum ./
 RUN go mod graph | awk '{if ($1 !~ "@") print $2}' | xargs go get
 
 # Copy remaining source
-COPY . .
+COPY /actions .
+COPY /engine .
+COPY /model .
+COPY /server .
+COPY go.mod .
+COPY go.sum .
+COPY main.go .
 
 # Build from sources
 RUN GOOS=linux \
