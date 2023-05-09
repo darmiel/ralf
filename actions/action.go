@@ -7,9 +7,13 @@ import (
 )
 
 var Actions = []Action{
-	&FilterInAction{},
-	&FilterOutAction{},
-	&RegexReplaceAction{},
+	new(FilterInAction),
+	new(FilterOutAction),
+	new(RegexReplaceAction),
+	new(ClearAttendeesAction),
+	new(AddAttendeeAction),
+	new(ClearAlarmsAction),
+	new(AddAlarmAction),
 }
 
 func Find(identifier string) Action {

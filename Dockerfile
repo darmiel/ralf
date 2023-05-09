@@ -16,6 +16,7 @@ COPY /actions ./actions
 COPY /engine ./engine
 COPY /model ./model
 COPY /server ./server
+COPY /internal ./internal
 COPY /cmd ./cmd
 COPY go.mod .
 COPY go.sum .

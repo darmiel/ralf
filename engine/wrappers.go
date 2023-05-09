@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	ics "github.com/darmiel/golang-ical"
+	"github.com/ralf-life/engine/internal/util"
 	"strconv"
 	"strings"
 	"time"
@@ -120,6 +121,10 @@ func (e *CtxEvent) Categories() string {
 
 func (e *CtxEvent) Location() string {
 	return e.getProp(ics.ComponentPropertyLocation)
+}
+
+func (e *CtxEvent) HasAttendee(mail string) bool {
+	return util.HasAttendee(e.VEvent, mail)
 }
 
 func CreateExprEnvironmentFromEvent(event *ics.VEvent) (*ExprEnvironment, error) {
