@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"github.com/go-redis/redis/v9"
-	"github.com/ralf-life/engine/server"
+	"github.com/ralf-life/engine/internal/server"
 )
 
 func main() {

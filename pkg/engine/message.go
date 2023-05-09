@@ -1,8 +1,8 @@
 package engine
 
 import (
-	"github.com/ralf-life/engine/actions"
-	"github.com/ralf-life/engine/model"
+	"github.com/ralf-life/engine/pkg/actions"
+	"github.com/ralf-life/engine/pkg/model"
 )
 
 // ExecutionMessage specifies what should happen next

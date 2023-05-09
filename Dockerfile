@@ -12,10 +12,7 @@ COPY go.mod go.sum ./
 RUN go mod graph | awk '{if ($1 !~ "@") print $2}' | xargs go get
 
 # Copy remaining source
-COPY /actions ./actions
-COPY /engine ./engine
-COPY /model ./model
-COPY /server ./server
+COPY /pkg ./pkg
 COPY /internal ./internal
 COPY /cmd ./cmd
 COPY go.mod .

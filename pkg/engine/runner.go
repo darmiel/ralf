@@ -2,8 +2,8 @@ package engine
 
 import (
 	ics "github.com/darmiel/golang-ical"
-	"github.com/ralf-life/engine/actions"
-	"github.com/ralf-life/engine/model"
+	"github.com/ralf-life/engine/pkg/actions"
+	"github.com/ralf-life/engine/pkg/model"
 )
 
 func ModifyCalendar(ctx *ContextFlow, flows model.Flows, cal *ics.Calendar) error {

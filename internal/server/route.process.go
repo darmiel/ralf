@@ -9,8 +9,8 @@ import (
 	"github.com/go-redis/redis/v9"
 	"github.com/gofiber/fiber/v2"
 	"github.com/imroc/req/v3"
-	"github.com/ralf-life/engine/engine"
-	"github.com/ralf-life/engine/model"
+	engine2 "github.com/ralf-life/engine/pkg/engine"
+	"github.com/ralf-life/engine/pkg/model"
 	"gopkg.in/yaml.v3"
 	"strings"
 	"time"
@@ -75,13 +75,13 @@ func (d *DemoServer) routeProcessDo(content []byte, ctx *fiber.Ctx) error {
 	}
 
 	// create context and run flow
-	cp := &engine.ContextFlow{
+	cp := &engine2.ContextFlow{
 		Profile:     &profile,
 		Context:     make(map[string]interface{}),
 		EnableDebug: true,
 		Verbose:     true,
 	}
-	if err = engine.ModifyCalendar(cp, profile.Flows, cal); err != nil {
+	if err = engine2.ModifyCalendar(cp, profile.Flows, cal); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to run flow ("+err.Error()+")")
 	}
 
