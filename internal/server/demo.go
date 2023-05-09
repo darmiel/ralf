@@ -15,7 +15,13 @@ func (d *DemoServer) Start() error {
 	return d.app.Listen(":1887")
 }
 
-func New(rc *redis.Client) *DemoServer {
+type info struct {
+	Version string `json:"version"`
+	Commit  string `json:"commit"`
+	Date    string `json:"date"`
+}
+
+func New(rc *redis.Client, version, commit, date string) *DemoServer {
 	app := fiber.New()
 	d := &DemoServer{
 		app: app,
@@ -29,6 +35,13 @@ func New(rc *redis.Client) *DemoServer {
 	}))
 	app.Post("/process", d.routeProcessPost)
 	app.Get("/process", d.routeProcessGet)
+	app.Get("/icanhasralf", func(ctx *fiber.Ctx) error {
+		return ctx.JSON(&info{
+			Version: version,
+			Commit:  commit,
+			Date:    date,
+		})
+	})
 
 	return d
 }

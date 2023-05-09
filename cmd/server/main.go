@@ -2,11 +2,19 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-redis/redis/v9"
 	"github.com/ralf-life/engine/internal/server"
 )
 
+var (
+	version string
+	commit  string
+	date    string
+)
+
 func main() {
+	fmt.Println("starting engine", version, "commit:", commit, "at", date)
 	// connect to redis
 	var rc *redis.Client
 
@@ -21,7 +29,7 @@ func main() {
 		panic(err)
 	}
 
-	demo := server.New(rc)
+	demo := server.New(rc, version, commit, date)
 	if err := demo.Start(); err != nil {
 		panic(err)
 	}
