@@ -22,7 +22,7 @@ func ModifyCalendar(ctx *ContextFlow, flows model.Flows, cal *ics.Calendar) erro
 			return err
 		}
 		switch fact.(type) {
-		case actions.FilterOutActionMessage:
+		case actions.FilterOutActionMessage, *actions.FilterOutActionMessage:
 			cc = append(cc[:i], cc[i+1:]...) // remove event from components
 		}
 	}
