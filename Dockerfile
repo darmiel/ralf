@@ -1,4 +1,4 @@
-FROM golang:1.19 AS builder
+FROM golang:1.20 AS builder
 
 LABEL maintainer="darmiel <hi@d2a.io>"
 LABEL org.opencontainers.image.source = "https://github.com/RALF-Life/engine"
@@ -36,6 +36,6 @@ USER nonroot
 
 COPY --from=builder /usr/src/app/dist/server-build_linux_arm64/engine-server .
 
-EXPOSE 1887
+EXPOSE 80
 
 ENTRYPOINT [ "/engine-server" ]

@@ -4,31 +4,45 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"github.com/darmiel/golang-ical"
 	"github.com/go-redis/redis/v9"
 	"github.com/gofiber/fiber/v2"
-	"github.com/imroc/req/v3"
-	engine2 "github.com/ralf-life/engine/pkg/engine"
+	"github.com/ralf-life/engine/pkg/engine"
 	"github.com/ralf-life/engine/pkg/model"
 	"gopkg.in/yaml.v3"
+	"io"
+	"net/http"
 	"strings"
 	"time"
 )
 
 // client requests the source URLs
-var client = req.C().SetTimeout(10 * time.Second)
+var client = &http.Client{
+	Timeout: 20 * time.Second,
+}
+
+const MaxContentLength = 8 * 1000 * 1000
+
+var ErrExceededContentLength = errors.New("content-length exceeded limit of 8 MB")
 
 func (d *DemoServer) getSourceWithRequest(url string, cache time.Duration) (string, error) {
-	// request source
-	resp, err := client.R().Get(url)
+	resp, err := client.Get(url)
 	if err != nil {
 		return "", err
 	}
-	val, err := resp.ToString()
+	defer resp.Body.Close()
+
+	if resp.ContentLength > MaxContentLength {
+		return "", ErrExceededContentLength
+	}
+	valBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
+	val := string(valBytes)
+
 	err = d.red.SetEx(context.TODO(), "source::"+url, val, cache).Err()
 	fmt.Println("[" + url + "] from request")
 	return val, err
@@ -75,13 +89,13 @@ func (d *DemoServer) routeProcessDo(content []byte, ctx *fiber.Ctx) error {
 	}
 
 	// create context and run flow
-	cp := &engine2.ContextFlow{
+	cp := &engine.ContextFlow{
 		Profile:     &profile,
 		Context:     make(map[string]interface{}),
 		EnableDebug: true,
 		Verbose:     true,
 	}
-	if err = engine2.ModifyCalendar(cp, profile.Flows, cal); err != nil {
+	if err = engine.ModifyCalendar(cp, profile.Flows, cal); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to run flow ("+err.Error()+")")
 	}
 

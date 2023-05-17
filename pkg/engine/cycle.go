@@ -6,12 +6,12 @@ import (
 	"github.com/antonmedv/expr"
 	ics "github.com/darmiel/golang-ical"
 	"github.com/ralf-life/engine/pkg/actions"
-	model2 "github.com/ralf-life/engine/pkg/model"
+	"github.com/ralf-life/engine/pkg/model"
 	"strings"
 )
 
 type ContextFlow struct {
-	*model2.Profile
+	*model.Profile
 	Context     map[string]interface{}
 	EnableDebug bool
 	Verbose     bool
@@ -20,7 +20,7 @@ type ContextFlow struct {
 
 var ErrExited = errors.New("flows exited because of a return statement")
 
-func runSingleDebugFlow(f *model2.DebugFlow, e *ics.VEvent) (ExecutionMessage, error) {
+func runSingleDebugFlow(f *model.DebugFlow, e *ics.VEvent) (ExecutionMessage, error) {
 	if str, ok := f.Debug.(string); ok {
 		// evaluated debug messages can start with "$"
 		if strings.HasPrefix(str, "$ ") {
@@ -42,7 +42,7 @@ func runSingleDebugFlow(f *model2.DebugFlow, e *ics.VEvent) (ExecutionMessage, e
 	return &DebugExecutionMessage{f.Debug}, nil
 }
 
-func runSingleConditionFlow(f *model2.ConditionFlow, e *ics.VEvent) (ExecutionMessage, error) {
+func runSingleConditionFlow(f *model.ConditionFlow, e *ics.VEvent) (ExecutionMessage, error) {
 	env, err := CreateExprEnvironmentFromEvent(e)
 	if err != nil {
 		return nil, fmt.Errorf("create expr env err: %v", err)
@@ -74,7 +74,7 @@ func runSingleConditionFlow(f *model2.ConditionFlow, e *ics.VEvent) (ExecutionMe
 
 }
 
-func runSingleActionFlow(f *model2.ActionFlow, e *ics.VEvent, verbose bool) (ExecutionMessage, error) {
+func runSingleActionFlow(f *model.ActionFlow, e *ics.VEvent, verbose bool) (ExecutionMessage, error) {
 	// find action
 	act := actions.Find(f.FlowIdentifier)
 	if act == nil {
@@ -96,17 +96,17 @@ func runSingleActionFlow(f *model2.ActionFlow, e *ics.VEvent, verbose bool) (Exe
 	return nil, nil
 }
 
-func RunSingleFlow(event *ics.VEvent, flow model2.Flow, verbose, enableDebugFlow bool) (ExecutionMessage, error) {
+func RunSingleFlow(event *ics.VEvent, flow model.Flow, verbose, enableDebugFlow bool) (ExecutionMessage, error) {
 	switch f := flow.(type) {
 
 	// ReturnFlow:
 	// Exit loop
-	case *model2.ReturnFlow:
+	case *model.ReturnFlow:
 		return new(ExitFlowsExecutionMessage), nil
 
 	// DebugFlow:
 	// Print message to console
-	case *model2.DebugFlow:
+	case *model.DebugFlow:
 		if !enableDebugFlow {
 			return nil, nil
 		}
@@ -114,12 +114,12 @@ func RunSingleFlow(event *ics.VEvent, flow model2.Flow, verbose, enableDebugFlow
 
 	// ConditionFlow:
 	// Check condition and execute child flows
-	case *model2.ConditionFlow:
+	case *model.ConditionFlow:
 		return runSingleConditionFlow(f, event)
 
 	// ActionFlow
 	// Run a specific action
-	case *model2.ActionFlow:
+	case *model.ActionFlow:
 		return runSingleActionFlow(f, event, verbose)
 	}
 
@@ -129,7 +129,7 @@ func RunSingleFlow(event *ics.VEvent, flow model2.Flow, verbose, enableDebugFlow
 func RunMultiFlowsRecursive(
 	fact *actions.ActionMessage,
 	event *ics.VEvent,
-	flows model2.Flows,
+	flows model.Flows,
 	debugMessages *[]interface{},
 	verbose, enableDebugFlow bool,
 ) error {
@@ -164,7 +164,7 @@ func RunMultiFlowsRecursive(
 	return nil
 }
 
-func (c *ContextFlow) RunMultiFlows(event *ics.VEvent, flows model2.Flows) (actions.ActionMessage, error) {
+func (c *ContextFlow) RunMultiFlows(event *ics.VEvent, flows model.Flows) (actions.ActionMessage, error) {
 	// filter everything in by default
 	var fact actions.ActionMessage = new(actions.FilterInActionMessage)
 	err := RunMultiFlowsRecursive(&fact, event, flows, &c.Debugs, c.Verbose, c.EnableDebug)
