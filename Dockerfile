@@ -21,7 +21,8 @@ COPY go.mod .
 COPY go.sum .
 COPY .goreleaser.yaml .
 
-RUN goreleaser build --snapshot --single-target
+RUN goreleaser build --snapshot --single-target -o engine-server
+RUN ls -laRth
 
 FROM alpine:3.15
 
@@ -34,7 +35,7 @@ RUN addgroup -S nonroot \
 
 USER nonroot
 
-COPY --from=builder /usr/src/app/dist/server-build_linux_arm64/engine-server .
+COPY --from=builder /usr/src/app/engine-server .
 
 EXPOSE 80
 
