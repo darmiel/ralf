@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/redis/go-redis/v9"
 	"github.com/ralf-life/engine/internal/server"
+	"github.com/redis/go-redis/v9"
 )
 
 var (
