@@ -66,7 +66,14 @@ func TestMixed(t *testing.T) {
 		if c.event != nil {
 			event = c.event()
 		}
-		resp, err := action.Execute(event, c.with, false)
+		sharedContext := make(map[string]interface{})
+		ctx := &Context{
+			Event:         event,
+			SharedContext: sharedContext,
+			With:          c.with,
+			Verbose:       false,
+		}
+		resp, err := action.Execute(ctx)
 		if err == nil && c.error {
 			t.Fatalf("expected error for test %d but no returned", i+1)
 		} else if err != nil && !c.error {

@@ -14,7 +14,7 @@ type ExprEnvironment struct {
 	Date    *CtxTime
 	Start   *CtxTime
 	End     *CtxTime
-	Context NamedValues
+	Context util.NamedValues
 }
 
 func (e *ExprEnvironment) AORB(val bool, a, b string) string {
@@ -26,6 +26,34 @@ func (e *ExprEnvironment) AORB(val bool, a, b string) string {
 
 func (e *ExprEnvironment) String(obj any) string {
 	return fmt.Sprintf("%+v", obj)
+}
+
+func (e *ExprEnvironment) Lower(inp string) string {
+	return strings.ToLower(inp)
+}
+
+func (e *ExprEnvironment) Upper(inp string) string {
+	return strings.ToUpper(inp)
+}
+
+func (e *ExprEnvironment) Trim(inp string) string {
+	return strings.TrimSpace(inp)
+}
+
+func (e *ExprEnvironment) Split(inp, sep string) []string {
+	return strings.Split(inp, sep)
+}
+
+func (e *ExprEnvironment) Join(elems []string, sep string) string {
+	return strings.Join(elems, sep)
+}
+
+func (e *ExprEnvironment) Repeat(what string, times int) string {
+	return strings.Repeat(what, times)
+}
+
+func (e *ExprEnvironment) Count(str, substr string) int {
+	return strings.Count(str, substr)
 }
 
 type (
@@ -128,7 +156,7 @@ func (e *CtxEvent) HasAttendee(mail string) bool {
 	return util.HasAttendee(e.VEvent, mail)
 }
 
-func CreateExprEnvironmentFromEvent(event *ics.VEvent, sharedContext NamedValues) (*ExprEnvironment, error) {
+func CreateExprEnvironmentFromEvent(event *ics.VEvent, sharedContext util.NamedValues) (*ExprEnvironment, error) {
 	start, err := event.GetStartAt()
 	if err != nil {
 		return nil, fmt.Errorf("get start at err: %v", err)

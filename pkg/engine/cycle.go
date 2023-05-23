@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/antonmedv/expr"
 	ics "github.com/darmiel/golang-ical"
+	"github.com/ralf-life/engine/internal/util"
 	"github.com/ralf-life/engine/pkg/actions"
 	"github.com/ralf-life/engine/pkg/model"
 	"strings"
@@ -18,11 +19,9 @@ type ContextFlow struct {
 	Debugs      []interface{}
 }
 
-type NamedValues map[string]interface{}
-
 var ErrExited = errors.New("flows exited because of a return statement")
 
-func runSingleDebugFlow(f *model.DebugFlow, e *ics.VEvent, sharedContext NamedValues) (ExecutionMessage, error) {
+func runSingleDebugFlow(f *model.DebugFlow, e *ics.VEvent, sharedContext util.NamedValues) (ExecutionMessage, error) {
 	if str, ok := f.Debug.(string); ok {
 		// evaluated debug messages can start with "$"
 		if strings.HasPrefix(str, "$ ") {
@@ -44,7 +43,7 @@ func runSingleDebugFlow(f *model.DebugFlow, e *ics.VEvent, sharedContext NamedVa
 	return &DebugExecutionMessage{f.Debug}, nil
 }
 
-func runSingleConditionFlow(f *model.ConditionFlow, e *ics.VEvent, sharedContext NamedValues) (ExecutionMessage, error) {
+func runSingleConditionFlow(f *model.ConditionFlow, e *ics.VEvent, sharedContext util.NamedValues) (ExecutionMessage, error) {
 	env, err := CreateExprEnvironmentFromEvent(e, sharedContext)
 	if err != nil {
 		return nil, fmt.Errorf("create expr env err: %v", err)
@@ -76,7 +75,7 @@ func runSingleConditionFlow(f *model.ConditionFlow, e *ics.VEvent, sharedContext
 
 }
 
-func runSingleActionFlow(f *model.ActionFlow, e *ics.VEvent, verbose bool, sharedContext NamedValues) (ExecutionMessage, error) {
+func runSingleActionFlow(f *model.ActionFlow, e *ics.VEvent, verbose bool, sharedContext util.NamedValues) (ExecutionMessage, error) {
 	// find action
 	act := actions.Find(f.FlowIdentifier)
 	if act == nil {
@@ -104,7 +103,7 @@ func runSingleActionFlow(f *model.ActionFlow, e *ics.VEvent, verbose bool, share
 	return nil, nil
 }
 
-func RunSingleFlow(event *ics.VEvent, flow model.Flow, verbose, enableDebugFlow bool, sharedContext NamedValues) (ExecutionMessage, error) {
+func RunSingleFlow(event *ics.VEvent, flow model.Flow, verbose, enableDebugFlow bool, sharedContext util.NamedValues) (ExecutionMessage, error) {
 	switch f := flow.(type) {
 
 	// ReturnFlow:
@@ -140,7 +139,7 @@ func RunMultiFlowsRecursive(
 	flows model.Flows,
 	debugMessages *[]interface{},
 	verbose, enableDebugFlow bool,
-	sharedContext NamedValues,
+	sharedContext util.NamedValues,
 ) error {
 	for _, flow := range flows {
 		msg, err := RunSingleFlow(event, flow, verbose, enableDebugFlow, sharedContext)
@@ -176,7 +175,7 @@ func RunMultiFlowsRecursive(
 func (c *ContextFlow) RunMultiFlows(event *ics.VEvent, flows model.Flows) (actions.ActionMessage, error) {
 	// filter everything in by default
 	var fact actions.ActionMessage = new(actions.FilterInActionMessage)
-	sharedContext := make(NamedValues)
+	sharedContext := make(util.NamedValues)
 	err := RunMultiFlowsRecursive(&fact, event, flows, &c.Debugs, c.Verbose, c.EnableDebug, sharedContext)
 	return fact, err
 }
