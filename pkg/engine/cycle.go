@@ -18,9 +18,11 @@ type ContextFlow struct {
 	Debugs      []interface{}
 }
 
+type NamedValues map[string]interface{}
+
 var ErrExited = errors.New("flows exited because of a return statement")
 
-func runSingleDebugFlow(f *model.DebugFlow, e *ics.VEvent) (ExecutionMessage, error) {
+func runSingleDebugFlow(f *model.DebugFlow, e *ics.VEvent, sharedContext NamedValues) (ExecutionMessage, error) {
 	if str, ok := f.Debug.(string); ok {
 		// evaluated debug messages can start with "$"
 		if strings.HasPrefix(str, "$ ") {
@@ -28,7 +30,7 @@ func runSingleDebugFlow(f *model.DebugFlow, e *ics.VEvent) (ExecutionMessage, er
 			if err != nil {
 				return nil, err
 			}
-			env, err := CreateExprEnvironmentFromEvent(e)
+			env, err := CreateExprEnvironmentFromEvent(e, sharedContext)
 			if err != nil {
 				return nil, err
 			}
@@ -42,8 +44,8 @@ func runSingleDebugFlow(f *model.DebugFlow, e *ics.VEvent) (ExecutionMessage, er
 	return &DebugExecutionMessage{f.Debug}, nil
 }
 
-func runSingleConditionFlow(f *model.ConditionFlow, e *ics.VEvent) (ExecutionMessage, error) {
-	env, err := CreateExprEnvironmentFromEvent(e)
+func runSingleConditionFlow(f *model.ConditionFlow, e *ics.VEvent, sharedContext NamedValues) (ExecutionMessage, error) {
+	env, err := CreateExprEnvironmentFromEvent(e, sharedContext)
 	if err != nil {
 		return nil, fmt.Errorf("create expr env err: %v", err)
 	}
@@ -74,13 +76,19 @@ func runSingleConditionFlow(f *model.ConditionFlow, e *ics.VEvent) (ExecutionMes
 
 }
 
-func runSingleActionFlow(f *model.ActionFlow, e *ics.VEvent, verbose bool) (ExecutionMessage, error) {
+func runSingleActionFlow(f *model.ActionFlow, e *ics.VEvent, verbose bool, sharedContext NamedValues) (ExecutionMessage, error) {
 	// find action
 	act := actions.Find(f.FlowIdentifier)
 	if act == nil {
 		return nil, errors.New("invalid flow identifier: " + f.FlowIdentifier)
 	}
-	msg, err := act.Execute(e, f.With, verbose)
+	ctx := &actions.Context{
+		Event:         e,
+		SharedContext: sharedContext,
+		With:          f.With,
+		Verbose:       verbose,
+	}
+	msg, err := act.Execute(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("flow execute err: %v", err)
 	}
@@ -96,7 +104,7 @@ func runSingleActionFlow(f *model.ActionFlow, e *ics.VEvent, verbose bool) (Exec
 	return nil, nil
 }
 
-func RunSingleFlow(event *ics.VEvent, flow model.Flow, verbose, enableDebugFlow bool) (ExecutionMessage, error) {
+func RunSingleFlow(event *ics.VEvent, flow model.Flow, verbose, enableDebugFlow bool, sharedContext NamedValues) (ExecutionMessage, error) {
 	switch f := flow.(type) {
 
 	// ReturnFlow:
@@ -110,17 +118,17 @@ func RunSingleFlow(event *ics.VEvent, flow model.Flow, verbose, enableDebugFlow 
 		if !enableDebugFlow {
 			return nil, nil
 		}
-		return runSingleDebugFlow(f, event)
+		return runSingleDebugFlow(f, event, sharedContext)
 
 	// ConditionFlow:
 	// Check condition and execute child flows
 	case *model.ConditionFlow:
-		return runSingleConditionFlow(f, event)
+		return runSingleConditionFlow(f, event, sharedContext)
 
 	// ActionFlow
 	// Run a specific action
 	case *model.ActionFlow:
-		return runSingleActionFlow(f, event, verbose)
+		return runSingleActionFlow(f, event, verbose, sharedContext)
 	}
 
 	return nil, nil
@@ -132,9 +140,10 @@ func RunMultiFlowsRecursive(
 	flows model.Flows,
 	debugMessages *[]interface{},
 	verbose, enableDebugFlow bool,
+	sharedContext NamedValues,
 ) error {
 	for _, flow := range flows {
-		msg, err := RunSingleFlow(event, flow, verbose, enableDebugFlow)
+		msg, err := RunSingleFlow(event, flow, verbose, enableDebugFlow, sharedContext)
 		// oh no, we always exit on errors
 		if err != nil {
 			return fmt.Errorf("single flow error: %v", err)
@@ -148,7 +157,7 @@ func RunMultiFlowsRecursive(
 			// exit flow execution loop
 			return ErrExited
 		case *QueueFlowsExecutionMessage:
-			if err = RunMultiFlowsRecursive(fact, event, t.Flows, debugMessages, verbose, enableDebugFlow); err != nil {
+			if err = RunMultiFlowsRecursive(fact, event, t.Flows, debugMessages, verbose, enableDebugFlow, sharedContext); err != nil {
 				// if a child flow exited (or failed) also exit all parents
 				return err
 			}
@@ -167,6 +176,7 @@ func RunMultiFlowsRecursive(
 func (c *ContextFlow) RunMultiFlows(event *ics.VEvent, flows model.Flows) (actions.ActionMessage, error) {
 	// filter everything in by default
 	var fact actions.ActionMessage = new(actions.FilterInActionMessage)
-	err := RunMultiFlowsRecursive(&fact, event, flows, &c.Debugs, c.Verbose, c.EnableDebug)
+	sharedContext := make(NamedValues)
+	err := RunMultiFlowsRecursive(&fact, event, flows, &c.Debugs, c.Verbose, c.EnableDebug, sharedContext)
 	return fact, err
 }

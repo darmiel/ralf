@@ -69,21 +69,21 @@ func mapToKV(m map[string][]string) []ics.PropertyParameter {
 	return res
 }
 
-func (rra *RegexReplaceAction) Execute(event *ics.VEvent, with map[string]interface{}, verbose bool) (ActionMessage, error) {
+func (rra *RegexReplaceAction) Execute(ctx *Context) (ActionMessage, error) {
 	// replace map
 	var replacers []*mapReplacers
 
-	globalCaseSensitive, err := optional[bool](with, CaseSensitiveKey, true)
+	globalCaseSensitive, err := optional[bool](ctx.With, CaseSensitiveKey, true)
 	if err != nil {
 		return nil, err
 	}
 
-	if has(with, "match") && has(with, "replace") {
-		match, err := required[string](with, "match")
+	if has(ctx.With, "match") && has(ctx.With, "replace") {
+		match, err := required[string](ctx.With, "match")
 		if err != nil {
 			return nil, err
 		}
-		repl, err := required[string](with, "replace")
+		repl, err := required[string](ctx.With, "replace")
 		if err != nil {
 			return nil, err
 		}
@@ -97,7 +97,7 @@ func (rra *RegexReplaceAction) Execute(event *ics.VEvent, with map[string]interf
 			Match:       match,
 			Replacement: repl,
 		})
-	} else if mapTypeRaw, ok := with["map"]; ok {
+	} else if mapTypeRaw, ok := ctx.With["map"]; ok {
 		// m should be of type map[string]interface{}
 		mapRaw, ok := mapTypeRaw.([]interface{})
 		if !ok {
@@ -143,7 +143,7 @@ func (rra *RegexReplaceAction) Execute(event *ics.VEvent, with map[string]interf
 	// "ORGANIZER/CN,MAIL,STATUS". This, however, ONLY addresses the parameters.
 	// If you also want to filter for the ORGANIZER-value itself, append a plus sign at the property name:
 	// "ORGANIZER+/CN" which will check ORGANIZER and ORGANIZER/CN
-	in, err := strArray(with, "in", []interface{}{"description"})
+	in, err := strArray(ctx.With, "in", []interface{}{"description"})
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +184,7 @@ func (rra *RegexReplaceAction) Execute(event *ics.VEvent, with map[string]interf
 
 		// check if the property even exists
 		prop := ics.ComponentProperty(strings.ToUpper(s))
-		val := event.GetProperty(prop)
+		val := ctx.Event.GetProperty(prop)
 		if val == nil {
 			continue
 		}
@@ -202,7 +202,7 @@ func (rra *RegexReplaceAction) Execute(event *ics.VEvent, with map[string]interf
 					upd = r.Do(upd)
 				}
 				if upd != v {
-					if verbose {
+					if ctx.Verbose {
 						fmt.Printf("[actions/regex-replace] ~Param[%s] '%s' changed to '%s'\n",
 							param, v, upd)
 					}
@@ -223,7 +223,7 @@ func (rra *RegexReplaceAction) Execute(event *ics.VEvent, with map[string]interf
 
 			// only print if something changed
 			if val.Value != upd {
-				if verbose {
+				if ctx.Verbose {
 					fmt.Printf("[actions/regex-replace] ~Param+(%s) '%s' changed to '%s'\n",
 						strings.ToUpper(s), val.Value, upd)
 				}
@@ -234,7 +234,7 @@ func (rra *RegexReplaceAction) Execute(event *ics.VEvent, with map[string]interf
 		if save {
 			// apply changes
 			kv := mapToKV(val.ICalParameters)
-			event.SetProperty(prop, upd, kv...)
+			ctx.Event.SetProperty(prop, upd, kv...)
 		}
 	}
 

@@ -13,24 +13,20 @@ func (*ClearAttendeesAction) Identifier() string {
 	return "actions/clear-attendees"
 }
 
-func (*ClearAttendeesAction) Execute(
-	event *ics.VEvent,
-	with map[string]interface{},
-	_ bool,
-) (ActionMessage, error) {
-	clearAttendees, err := optional[bool](with, "attendees", true)
+func (*ClearAttendeesAction) Execute(ctx *Context) (ActionMessage, error) {
+	clearAttendees, err := optional[bool](ctx.With, "attendees", true)
 	if err != nil {
 		return nil, err
 	}
-	clearOrganizer, err := optional[bool](with, "organizer", false)
+	clearOrganizer, err := optional[bool](ctx.With, "organizer", false)
 	if err != nil {
 		return nil, err
 	}
-	for i := len(event.Properties) - 1; i >= 0; i-- {
-		doAttendees := clearAttendees && event.Properties[i].IANAToken == string(ics.PropertyAttendee)
-		doOrganizer := clearOrganizer && event.Properties[i].IANAToken == string(ics.PropertyOrganizer)
+	for i := len(ctx.Event.Properties) - 1; i >= 0; i-- {
+		doAttendees := clearAttendees && ctx.Event.Properties[i].IANAToken == string(ics.PropertyAttendee)
+		doOrganizer := clearOrganizer && ctx.Event.Properties[i].IANAToken == string(ics.PropertyOrganizer)
 		if doAttendees || doOrganizer {
-			event.Properties = append(event.Properties[:i], event.Properties[i+1:]...)
+			ctx.Event.Properties = append(ctx.Event.Properties[:i], ctx.Event.Properties[i+1:]...)
 		}
 	}
 	return nil, nil
@@ -44,18 +40,14 @@ func (*AddAttendeeAction) Identifier() string {
 	return "actions/add-attendee"
 }
 
-func (*AddAttendeeAction) Execute(
-	event *ics.VEvent,
-	with map[string]interface{},
-	verbose bool,
-) (ActionMessage, error) {
-	mail, err := required[string](with, "mail")
+func (*AddAttendeeAction) Execute(ctx *Context) (ActionMessage, error) {
+	mail, err := required[string](ctx.With, "mail")
 	if err != nil {
 		return nil, err
 	}
 
 	var props []ics.PropertyParameter
-	if status, _ := optional[string](with, "status", ""); status != "" {
+	if status, _ := optional[string](ctx.With, "status", ""); status != "" {
 		switch strings.ToLower(status) {
 		case "needs-action":
 			props = append(props, ics.ParticipationStatusNeedsAction)
@@ -74,7 +66,7 @@ func (*AddAttendeeAction) Execute(
 		}
 	}
 
-	if role, _ := optional[string](with, "role", ""); role != "" {
+	if role, _ := optional[string](ctx.With, "role", ""); role != "" {
 		switch strings.ToLower(role) {
 		case "chair":
 			props = append(props, ics.ParticipationRoleChair)
@@ -89,13 +81,13 @@ func (*AddAttendeeAction) Execute(
 		}
 	}
 
-	if verbose {
+	if ctx.Verbose {
 		fmt.Println("[actions/add-attendee] props:", props)
 	}
 
 	// check if event already has attendee
-	if !util.HasAttendee(event, mail) {
-		event.AddAttendee(mail, props...)
+	if !util.HasAttendee(ctx.Event, mail) {
+		ctx.Event.AddAttendee(mail, props...)
 	}
 	return nil, nil
 }

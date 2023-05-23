@@ -100,11 +100,9 @@ func (d *DemoServer) routeProcessDo(content []byte, ctx *fiber.Ctx) error {
 	}
 
 	// append debug messages as header
-	debugMessages := make([]string, len(cp.Debugs))
 	for i, v := range cp.Debugs {
-		debugMessages[i] = fmt.Sprintf("%+v", v)
+		ctx.Append(fmt.Sprintf("X-Debug-Message-%d", i), fmt.Sprintf("%+v", v))
 	}
-	ctx.Append("X-Debug-Messages", debugMessages...)
 
 	// append content-type and return calendar
 	ctx.Set("Content-Type", "text/calendar")

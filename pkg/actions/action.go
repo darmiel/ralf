@@ -14,6 +14,7 @@ var Actions = []Action{
 	new(AddAttendeeAction),
 	new(ClearAlarmsAction),
 	new(AddAlarmAction),
+	new(CtxSetAction),
 }
 
 func Find(identifier string) Action {
@@ -27,7 +28,14 @@ func Find(identifier string) Action {
 
 type Action interface {
 	Identifier() string
-	Execute(event *ics.VEvent, with map[string]interface{}, verbose bool) (ActionMessage, error)
+	Execute(ctx *Context) (ActionMessage, error)
+}
+
+type Context struct {
+	Event         *ics.VEvent
+	SharedContext map[string]interface{}
+	With          map[string]interface{}
+	Verbose       bool
 }
 
 type ActionMessage interface {

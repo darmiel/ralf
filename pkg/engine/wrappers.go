@@ -10,10 +10,11 @@ import (
 )
 
 type ExprEnvironment struct {
-	Event *CtxEvent
-	Date  *CtxTime
-	Start *CtxTime
-	End   *CtxTime
+	Event   *CtxEvent
+	Date    *CtxTime
+	Start   *CtxTime
+	End     *CtxTime
+	Context NamedValues
 }
 
 func (e *ExprEnvironment) AORB(val bool, a, b string) string {
@@ -127,7 +128,7 @@ func (e *CtxEvent) HasAttendee(mail string) bool {
 	return util.HasAttendee(e.VEvent, mail)
 }
 
-func CreateExprEnvironmentFromEvent(event *ics.VEvent) (*ExprEnvironment, error) {
+func CreateExprEnvironmentFromEvent(event *ics.VEvent, sharedContext NamedValues) (*ExprEnvironment, error) {
 	start, err := event.GetStartAt()
 	if err != nil {
 		return nil, fmt.Errorf("get start at err: %v", err)
@@ -144,8 +145,9 @@ func CreateExprEnvironmentFromEvent(event *ics.VEvent) (*ExprEnvironment, error)
 		Event: &CtxEvent{
 			VEvent: event,
 		},
-		Date:  &ctxStart,
-		Start: &ctxStart,
-		End:   &ctxEnd,
+		Date:    &ctxStart,
+		Start:   &ctxStart,
+		End:     &ctxEnd,
+		Context: sharedContext,
 	}, nil
 }

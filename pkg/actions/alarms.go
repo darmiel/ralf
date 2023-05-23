@@ -12,14 +12,10 @@ func (*ClearAlarmsAction) Identifier() string {
 	return "actions/clear-alarms"
 }
 
-func (*ClearAlarmsAction) Execute(
-	event *ics.VEvent,
-	_ map[string]interface{},
-	_ bool,
-) (ActionMessage, error) {
-	for i := len(event.Properties) - 1; i >= 0; i-- {
-		if event.Properties[i].IANAToken == string(ics.ComponentVAlarm) {
-			event.Properties = append(event.Properties[:i], event.Properties[i+1:]...)
+func (*ClearAlarmsAction) Execute(ctx *Context) (ActionMessage, error) {
+	for i := len(ctx.Event.Properties) - 1; i >= 0; i-- {
+		if ctx.Event.Properties[i].IANAToken == string(ics.ComponentVAlarm) {
+			ctx.Event.Properties = append(ctx.Event.Properties[:i], ctx.Event.Properties[i+1:]...)
 		}
 	}
 	return nil, nil
@@ -33,22 +29,18 @@ func (*AddAlarmAction) Identifier() string {
 	return "actions/add-alarm"
 }
 
-func (*AddAlarmAction) Execute(
-	event *ics.VEvent,
-	with map[string]interface{},
-	verbose bool,
-) (ActionMessage, error) {
-	action, err := required[string](with, "action")
+func (*AddAlarmAction) Execute(ctx *Context) (ActionMessage, error) {
+	action, err := required[string](ctx.With, "action")
 	if err != nil {
 		return nil, err
 	}
-	trigger, err := required[string](with, "trigger")
+	trigger, err := required[string](ctx.With, "trigger")
 	if err != nil {
 		return nil, err
 	}
 
-	duration, _ := optional[string](with, "duration", "")
-	repeat, _ := optional[string](with, "repeat", "")
+	duration, _ := optional[string](ctx.With, "duration", "")
+	repeat, _ := optional[string](ctx.With, "repeat", "")
 	// https://www.rfc-editor.org/rfc/rfc5545#section-3.6.6
 	// according to rfc5545, duration and repeat are optional but both should not be empty if either of those occurs
 	if (duration == "") != (repeat == "") {
@@ -69,7 +61,7 @@ func (*AddAlarmAction) Execute(
 		return nil, fmt.Errorf("unknown action: %s", action)
 	}
 
-	alarm := event.AddAlarm()
+	alarm := ctx.Event.AddAlarm()
 	alarm.SetAction(icsAction)
 	alarm.SetTrigger(trigger)
 

@@ -1,7 +1,5 @@
 package actions
 
-import ics "github.com/darmiel/golang-ical"
-
 type FilterOutAction struct{}
 
 func (foa *FilterOutAction) Identifier() string {
@@ -10,6 +8,6 @@ func (foa *FilterOutAction) Identifier() string {
 
 ///
 
-func (foa *FilterOutAction) Execute(_ *ics.VEvent, _ map[string]interface{}, _ bool) (ActionMessage, error) {
+func (foa *FilterOutAction) Execute(_ *Context) (ActionMessage, error) {
 	return new(FilterOutActionMessage), nil
 }
