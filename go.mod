@@ -3,7 +3,7 @@ module github.com/ralf-life/engine
 go 1.20
 
 require (
-	github.com/antonmedv/expr v1.9.0
+	github.com/antonmedv/expr v1.12.5
 	github.com/darmiel/golang-ical v0.0.0-20221121153313-bd526fc4018d
 	github.com/gofiber/fiber/v2 v2.39.0
 	github.com/redis/go-redis/v9 v9.0.4

@@ -1,9 +1,8 @@
-package engine
+package util
 
 import (
 	"fmt"
 	ics "github.com/darmiel/golang-ical"
-	"github.com/ralf-life/engine/internal/util"
 	"strconv"
 	"strings"
 	"time"
@@ -14,7 +13,7 @@ type ExprEnvironment struct {
 	Date    *CtxTime
 	Start   *CtxTime
 	End     *CtxTime
-	Context util.NamedValues
+	Context NamedValues
 }
 
 func (e *ExprEnvironment) AORB(val bool, a, b string) string {
@@ -54,6 +53,10 @@ func (e *ExprEnvironment) Repeat(what string, times int) string {
 
 func (e *ExprEnvironment) Count(str, substr string) int {
 	return strings.Count(str, substr)
+}
+
+func (e *ExprEnvironment) Replace(str, old, new string) string {
+	return strings.ReplaceAll(str, old, new)
 }
 
 type (
@@ -153,10 +156,10 @@ func (e *CtxEvent) Location() string {
 }
 
 func (e *CtxEvent) HasAttendee(mail string) bool {
-	return util.HasAttendee(e.VEvent, mail)
+	return HasAttendee(e.VEvent, mail)
 }
 
-func CreateExprEnvironmentFromEvent(event *ics.VEvent, sharedContext util.NamedValues) (*ExprEnvironment, error) {
+func CreateExprEnvironmentFromEvent(event *ics.VEvent, sharedContext NamedValues) (*ExprEnvironment, error) {
 	start, err := event.GetStartAt()
 	if err != nil {
 		return nil, fmt.Errorf("get start at err: %v", err)

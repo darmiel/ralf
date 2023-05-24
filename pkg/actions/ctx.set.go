@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/antonmedv/expr"
+	"github.com/ralf-life/engine/internal/util"
+	"strings"
 )
 
 type CtxSetAction struct{}
@@ -14,36 +16,51 @@ func (c *CtxSetAction) Identifier() string {
 
 var (
 	ErrKeyInSharedContext = errors.New("key already in shared context. set $overwrite to true to overwrite")
+	ErrNotString          = errors.New("dynamic values must be of type string")
 )
+
+type ctxSetExprEnv struct {
+	util.ExprEnvironment
+	With util.NamedValues
+}
 
 func (c *CtxSetAction) Execute(ctx *Context) (ActionMessage, error) {
 	overwrite, err := optional(ctx.With, "$overwrite", false)
 	if err != nil {
 		return nil, err
 	}
-	eval, err := optional(ctx.With, "$eval", "")
-	if err != nil {
-		return nil, err
-	}
 	for k, v := range ctx.With {
+		dynamic := strings.HasPrefix(k, "$")
+		if dynamic {
+			k = strings.TrimLeft(k, "$")
+			// for dynamic values, the value must be a string.
+			if _, ok := v.(string); !ok {
+				return nil, ErrNotString
+			}
+		}
 		// if already in shared context, and we don't want to overwrite, panic
 		if _, ok := ctx.SharedContext[k]; ok && !overwrite {
 			return nil, ErrKeyInSharedContext
 		}
-		if eval != "" {
-			if ctx.Verbose {
-				fmt.Printf("evaluating $eval expression: '%s'...\n", eval)
+		if dynamic {
+			defaultEnv, err := util.CreateExprEnvironmentFromEvent(ctx.Event, ctx.SharedContext)
+			if err != nil {
+				return nil, err
 			}
-			if eval, err := expr.Eval(eval, map[string]interface{}{
-				"Value": v,
-			}); err != nil {
-				return nil, fmt.Errorf("cannot evaluate $eval-expresison: %v", err)
-			} else {
-				fmt.Printf("result: '%+v'\n", v)
-				v = eval
+			env := ctxSetExprEnv{
+				ExprEnvironment: *defaultEnv,
+				With:            ctx.With,
 			}
+			eval, err := expr.Eval(v.(string), &env)
+			if err != nil {
+				return nil, err
+			}
+			v = eval
 		}
 		ctx.SharedContext[k] = v
+		if ctx.Verbose {
+			fmt.Printf("[ctx/set] Set (%s) to '%+v'\n", k, v)
+		}
 	}
 	return nil, nil
 }

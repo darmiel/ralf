@@ -14,6 +14,7 @@ import (
 	"gopkg.in/yaml.v3"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -100,8 +101,9 @@ func (d *DemoServer) routeProcessDo(content []byte, ctx *fiber.Ctx) error {
 	}
 
 	// append debug messages as header
+	ctx.Append("X-Debug-Message-Count", strconv.Itoa(len(cp.Debugs)))
 	for i, v := range cp.Debugs {
-		ctx.Append(fmt.Sprintf("X-Debug-Message-%d", i), fmt.Sprintf("%+v", v))
+		ctx.Append(fmt.Sprintf("X-Debug-Message-%d", i+1), fmt.Sprintf("%+v", v))
 	}
 
 	// append content-type and return calendar
