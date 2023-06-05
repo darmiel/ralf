@@ -50,7 +50,9 @@ func runSingleConditionFlow(f *model.ConditionFlow, e *ics.VEvent, sharedContext
 	}
 
 	result := false
-	isAnd := strings.ToUpper(f.Operator) == "AND"
+
+	// default operator should be AND
+	isAnd := strings.ToUpper(f.Operator) != "OR"
 
 	for _, cond := range f.Condition {
 		ex, err := expr.Compile(cond, expr.Env(new(util.ExprEnvironment)), expr.AsBool())
