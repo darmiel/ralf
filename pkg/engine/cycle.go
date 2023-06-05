@@ -109,6 +109,9 @@ func RunSingleFlow(event *ics.VEvent, flow model.Flow, verbose, enableDebugFlow 
 	// ReturnFlow:
 	// Exit loop
 	case *model.ReturnFlow:
+		if !f.Return {
+			return nil, nil
+		}
 		return new(ExitFlowsExecutionMessage), nil
 
 	// DebugFlow:

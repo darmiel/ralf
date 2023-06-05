@@ -11,21 +11,27 @@ type Flow interface {
 	KeyIdentifier() string
 }
 
+type Flows []Flow
+
+///
+
 // ActionFlow represents an action to run more flows
 type ActionFlow struct {
-	FlowIdentifier string                 `yaml:"do" json:"do"`
-	With           map[string]interface{} `yaml:"with" json:"with"`
+	FlowIdentifier string                 `yaml:"do" json:"do" bson:"do"`
+	With           map[string]interface{} `yaml:"with" json:"with" bson:"with"`
 }
 
 func (a *ActionFlow) KeyIdentifier() string {
 	return "do"
 }
 
+///
+
 type Conditions []string
 
-func (c Conditions) MarshalYAML() (interface{}, error) {
-	if len(c) == 1 {
-		return c[0], nil
+func (c *Conditions) MarshalYAML() (interface{}, error) {
+	if len(*c) == 1 {
+		return (*c)[0], nil
 	}
 	return c, nil
 }
@@ -47,9 +53,9 @@ func (c *Conditions) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
-func (c Conditions) MarshalJSON() ([]byte, error) {
-	if len(c) == 1 {
-		return json.Marshal(c[0])
+func (c *Conditions) MarshalJSON() ([]byte, error) {
+	if len(*c) == 1 {
+		return json.Marshal((*c)[0])
 	}
 	return json.Marshal(c)
 }
@@ -73,43 +79,34 @@ func (c *Conditions) UnmarshalJSON(val []byte) error {
 
 // ConditionFlow represents a condition
 type ConditionFlow struct {
-	Condition Conditions `yaml:"if" json:"if"`
-	Operator  string     `yaml:"op" json:"op"`
-	Then      Flows      `yaml:"then" json:"then"`
-	Else      Flows      `yaml:"else" json:"else"`
+	Condition Conditions `yaml:"if" json:"if" bson:"if"`
+	Operator  string     `yaml:"op" json:"op" bson:"op"`
+	Then      Flows      `yaml:"then" json:"then" bson:"then"`
+	Else      Flows      `yaml:"else" json:"else" bson:"else"`
 }
 
 func (c *ConditionFlow) KeyIdentifier() string {
 	return "if"
 }
 
+///
+
 // ReturnFlow stops the current execution immediately
 type ReturnFlow struct {
+	Return bool `yaml:"return" json:"return" bson:"return"`
 }
 
 func (r *ReturnFlow) KeyIdentifier() string {
 	return "return"
 }
 
-func (r *ReturnFlow) MarshalJSON() ([]byte, error) {
-	return []byte("return"), nil
-}
-
-func (r *ReturnFlow) MarshalYAML() (interface{}, error) {
-	return "return", nil
-}
+///
 
 // DebugFlow prints a message in the console
 type DebugFlow struct {
-	Debug interface{} `yaml:"debug" json:"debug"`
+	Debug interface{} `yaml:"debug" json:"debug" bson:"debug"`
 }
 
 func (d *DebugFlow) KeyIdentifier() string {
 	return "debug"
 }
-
-/// Predefined flows
-
-var (
-	Return = &ReturnFlow{}
-)

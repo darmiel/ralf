@@ -7,6 +7,7 @@ require (
 	github.com/darmiel/golang-ical v0.0.0-20221121153313-bd526fc4018d
 	github.com/gofiber/fiber/v2 v2.39.0
 	github.com/redis/go-redis/v9 v9.0.4
+	go.mongodb.org/mongo-driver v1.11.6
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -19,7 +20,6 @@ require (
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/rivo/uniseg v0.4.2 // indirect
-	github.com/stretchr/testify v1.8.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.41.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect

@@ -8,8 +8,6 @@ import (
 	"time"
 )
 
-type Flows []Flow
-
 func ParseProfileFromYAML(reader io.Reader) (*Profile, error) {
 	dec := yaml.NewDecoder(reader)
 	dec.KnownFields(true)
@@ -47,18 +45,14 @@ var yamlKeys = map[string]func(node *yaml.Node) (Flow, error){
 		err := node.Decode(&dbg)
 		return dbg, err
 	},
+	"return": func(node *yaml.Node) (Flow, error) {
+		var rtf *ReturnFlow
+		err := node.Decode(&rtf)
+		return rtf, err
+	},
 }
 
 var yamlTags = map[string]func(node *yaml.Node) (Flow, error){
-	"!!str": func(node *yaml.Node) (Flow, error) {
-		if v := node.Value; v != "" {
-			switch v {
-			case "return":
-				return Return, nil
-			}
-		}
-		return nil, errors.New("unknown string type: " + node.Value)
-	},
 	"!!map": func(node *yaml.Node) (Flow, error) {
 		var (
 			err error
