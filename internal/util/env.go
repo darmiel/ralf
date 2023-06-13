@@ -9,10 +9,10 @@ import (
 )
 
 type ExprEnvironment struct {
-	Event   *CtxEvent
-	Date    *CtxTime
-	Start   *CtxTime
-	End     *CtxTime
+	Event   CtxEvent
+	Date    CtxTime
+	Start   CtxTime
+	End     CtxTime
 	Context NamedValues
 }
 
@@ -173,12 +173,12 @@ func CreateExprEnvironmentFromEvent(event *ics.VEvent, sharedContext NamedValues
 	ctxEnd := CtxTime{&end}
 
 	return &ExprEnvironment{
-		Event: &CtxEvent{
+		Event: CtxEvent{
 			VEvent: event,
 		},
-		Date:    &ctxStart,
-		Start:   &ctxStart,
-		End:     &ctxEnd,
+		Date:    ctxStart,
+		Start:   ctxStart,
+		End:     ctxEnd,
 		Context: sharedContext,
 	}, nil
 }
