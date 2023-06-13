@@ -61,39 +61,39 @@ func (e *ExprEnvironment) Replace(str, old, new string) string {
 
 type (
 	CtxTime struct {
-		*time.Time
+		time *time.Time
 	}
 	CtxEvent struct {
-		*ics.VEvent
+		event *ics.VEvent
 	}
 )
 
-func (c *CtxTime) IsMonday() bool {
-	return c.Weekday() == time.Monday
+func (c CtxTime) IsMonday() bool {
+	return c.time.Weekday() == time.Monday
 }
 
-func (c *CtxTime) IsTuesday() bool {
-	return c.Weekday() == time.Tuesday
+func (c CtxTime) IsTuesday() bool {
+	return c.time.Weekday() == time.Tuesday
 }
 
-func (c *CtxTime) IsWednesday() bool {
-	return c.Weekday() == time.Wednesday
+func (c CtxTime) IsWednesday() bool {
+	return c.time.Weekday() == time.Wednesday
 }
 
-func (c *CtxTime) IsThursday() bool {
-	return c.Weekday() == time.Thursday
+func (c CtxTime) IsThursday() bool {
+	return c.time.Weekday() == time.Thursday
 }
 
-func (c *CtxTime) IsFriday() bool {
-	return c.Weekday() == time.Friday
+func (c CtxTime) IsFriday() bool {
+	return c.time.Weekday() == time.Friday
 }
 
-func (c *CtxTime) IsSaturday() bool {
-	return c.Weekday() == time.Saturday
+func (c CtxTime) IsSaturday() bool {
+	return c.time.Weekday() == time.Saturday
 }
 
-func (c *CtxTime) IsSunday() bool {
-	return c.Weekday() == time.Sunday
+func (c CtxTime) IsSunday() bool {
+	return c.time.Weekday() == time.Sunday
 }
 
 func parseTime(time string) (hour, min int, ok bool) {
@@ -118,45 +118,45 @@ func parseTime(time string) (hour, min int, ok bool) {
 	return hour, min, true
 }
 
-func (c *CtxTime) IsAfter(time string) bool {
+func (c CtxTime) IsAfter(time string) bool {
 	hr, min, ok := parseTime(time)
 	if !ok {
 		return false
 	}
-	return c.Hour() >= hr && c.Minute() >= min
+	return c.time.Hour() >= hr && c.time.Minute() >= min
 }
 
 ///
 
-func (e *CtxEvent) getProp(prop ics.ComponentProperty) string {
-	if v := e.GetProperty(prop); v != nil {
+func (e CtxEvent) getProp(prop ics.ComponentProperty) string {
+	if v := e.event.GetProperty(prop); v != nil {
 		return v.Value
 	}
 	return ""
 }
 
-func (e *CtxEvent) Description() string {
+func (e CtxEvent) Description() string {
 	return e.getProp(ics.ComponentPropertyDescription)
 }
 
-func (e *CtxEvent) Summary() string {
+func (e CtxEvent) Summary() string {
 	return e.getProp(ics.ComponentPropertySummary)
 }
 
-func (e *CtxEvent) URL() string {
+func (e CtxEvent) URL() string {
 	return e.getProp(ics.ComponentPropertyUrl)
 }
 
-func (e *CtxEvent) Categories() string {
+func (e CtxEvent) Categories() string {
 	return e.getProp(ics.ComponentPropertyCategories)
 }
 
-func (e *CtxEvent) Location() string {
+func (e CtxEvent) Location() string {
 	return e.getProp(ics.ComponentPropertyLocation)
 }
 
-func (e *CtxEvent) HasAttendee(mail string) bool {
-	return HasAttendee(e.VEvent, mail)
+func (e CtxEvent) HasAttendee(mail string) bool {
+	return HasAttendee(e.event, mail)
 }
 
 func CreateExprEnvironmentFromEvent(event *ics.VEvent, sharedContext NamedValues) (*ExprEnvironment, error) {
@@ -174,7 +174,7 @@ func CreateExprEnvironmentFromEvent(event *ics.VEvent, sharedContext NamedValues
 
 	return &ExprEnvironment{
 		Event: CtxEvent{
-			VEvent: event,
+			event: event,
 		},
 		Date:    ctxStart,
 		Start:   ctxStart,
