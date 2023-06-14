@@ -57,7 +57,7 @@ func (c *Conditions) MarshalJSON() ([]byte, error) {
 	if len(*c) == 1 {
 		return json.Marshal((*c)[0])
 	}
-	return json.Marshal(c)
+	return json.Marshal([]string(*c))
 }
 
 func (c *Conditions) UnmarshalJSON(val []byte) error {
