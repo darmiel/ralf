@@ -56,6 +56,60 @@ func TestMixed(t *testing.T) {
 				return prop.Value == "World!"
 			},
 		},
+		{
+			action: "actions/clear-alarms",
+			event: func() *ics.VEvent {
+				event := ics.NewEvent("a")
+				event.AddAlarm()
+				return event
+			},
+			check: func(event *ics.VEvent) bool {
+				return len(event.Alarms()) == 0
+			},
+		},
+		{
+			action: "actions/add-alarm",
+			with: map[string]interface{}{
+				"action":  "display",
+				"trigger": "1d",
+			},
+			event: func() *ics.VEvent {
+				return ics.NewEvent("ok")
+			},
+			check: func(event *ics.VEvent) bool {
+				return len(event.Alarms()) == 1
+			},
+		},
+		{
+			action: "actions/clear-attendees",
+			event: func() *ics.VEvent {
+				event := ics.NewEvent("a")
+				event.AddAttendee("aaa")
+				return event
+			},
+			check: func(event *ics.VEvent) bool {
+				return len(event.Alarms()) == 0
+			},
+		},
+		{
+			action: "actions/add-attendee",
+			with: map[string]interface{}{
+				"mail": "me@example.com",
+			},
+			event: func() *ics.VEvent {
+				return ics.NewEvent("ok")
+			},
+			check: func(event *ics.VEvent) bool {
+				return len(event.Attendees()) == 1
+			},
+		},
+		{
+			action: "ctx/set",
+			with: map[string]interface{}{
+				"hello": "world",
+			},
+			error: false,
+		},
 	}
 	for i, c := range cases {
 		action, exists := getAction(c.action)
