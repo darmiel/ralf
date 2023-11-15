@@ -69,6 +69,14 @@ type (
 	}
 )
 
+func NewTime(time time.Time) CtxTime {
+	return CtxTime{time: &time}
+}
+
+func NewEvent(event ics.VEvent) CtxEvent {
+	return CtxEvent{event: &event}
+}
+
 func (c CtxTime) IsMonday() bool {
 	return c.time.Weekday() == time.Monday
 }
