@@ -7,6 +7,7 @@ import (
 	ics "github.com/darmiel/golang-ical"
 	"github.com/ralf-life/engine/internal/util"
 	"github.com/ralf-life/engine/pkg/actions"
+	"github.com/ralf-life/engine/pkg/environ"
 	"github.com/ralf-life/engine/pkg/model"
 	"strings"
 )
@@ -25,11 +26,11 @@ func runSingleDebugFlow(f *model.DebugFlow, e *ics.VEvent, sharedContext util.Na
 	if str, ok := f.Debug.(string); ok {
 		// evaluated debug messages can start with "$"
 		if strings.HasPrefix(str, "$ ") {
-			ex, err := expr.Compile(str[2:], expr.Env(new(util.ExprEnvironment)))
+			ex, err := expr.Compile(str[2:], expr.Env(new(environ.ExprEnvironment)))
 			if err != nil {
 				return nil, err
 			}
-			env, err := util.CreateExprEnvironmentFromEvent(e, sharedContext)
+			env, err := environ.CreateExprEnvironmentFromEvent(e, sharedContext)
 			if err != nil {
 				return nil, err
 			}
@@ -44,7 +45,7 @@ func runSingleDebugFlow(f *model.DebugFlow, e *ics.VEvent, sharedContext util.Na
 }
 
 func runSingleConditionFlow(f *model.ConditionFlow, e *ics.VEvent, sharedContext util.NamedValues) (ExecutionMessage, error) {
-	env, err := util.CreateExprEnvironmentFromEvent(e, sharedContext)
+	env, err := environ.CreateExprEnvironmentFromEvent(e, sharedContext)
 	if err != nil {
 		return nil, fmt.Errorf("create expr env err: %v", err)
 	}
@@ -55,7 +56,7 @@ func runSingleConditionFlow(f *model.ConditionFlow, e *ics.VEvent, sharedContext
 	isAnd := strings.ToUpper(f.Operator) != "OR"
 
 	for _, cond := range f.Condition {
-		ex, err := expr.Compile(cond, expr.Env(new(util.ExprEnvironment)), expr.AsBool())
+		ex, err := expr.Compile(cond, expr.Env(new(environ.ExprEnvironment)), expr.AsBool())
 		if err != nil {
 			return nil, fmt.Errorf("expr compile err: %v", err)
 		}

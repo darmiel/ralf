@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/antonmedv/expr"
 	"github.com/ralf-life/engine/internal/util"
+	"github.com/ralf-life/engine/pkg/environ"
 	"strings"
 )
 
@@ -20,7 +21,7 @@ var (
 )
 
 type ctxSetExprEnv struct {
-	util.ExprEnvironment
+	environ.ExprEnvironment
 	With util.NamedValues
 }
 
@@ -43,7 +44,7 @@ func (c *CtxSetAction) Execute(ctx *Context) (ActionMessage, error) {
 			return nil, ErrKeyInSharedContext
 		}
 		if dynamic {
-			defaultEnv, err := util.CreateExprEnvironmentFromEvent(ctx.Event, ctx.SharedContext)
+			defaultEnv, err := environ.CreateExprEnvironmentFromEvent(ctx.Event, ctx.SharedContext)
 			if err != nil {
 				return nil, err
 			}
