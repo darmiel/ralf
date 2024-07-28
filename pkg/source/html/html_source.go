@@ -280,20 +280,8 @@ func assignEventDetails(event *ics.VEvent, root *goquery.Selection, selector Sel
 		return ErrSkip
 	}
 	if startText == endText && startDate.Hour() == 0 && startDate.Minute() == 0 && startDate.Second() == 0 {
-		startDateZero := time.Date(
-			startDate.Year(),
-			startDate.Month(),
-			startDate.Day(),
-			0,
-			0,
-			0,
-			0,
-			startDate.Location(),
-		)
-		event.SetStartAt(startDateZero)
-
-		endDateZero := startDateZero.Add(time.Hour * 24)
-		event.SetEndAt(endDateZero)
+		event.SetProperty(ics.ComponentPropertyDtStart, startDate.Format("20060102"), ics.WithValue("DATE"))
+		event.SetProperty(ics.ComponentPropertyDtEnd, startDate.Format("20060102"), ics.WithValue("DATE"))
 	} else {
 		var endDate time.Time
 		if endDate, err = time.Parse(selector.EndFormat, endText); err != nil {
