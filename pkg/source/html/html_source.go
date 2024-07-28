@@ -227,7 +227,6 @@ func parseEvents(doc *goquery.Document, calendar *ics.Calendar, selector Selecto
 			return false
 		}
 
-		fmt.Println("Adding event", event.GetProperty(ics.ComponentPropertySummary))
 		calendar.AddVEvent(event)
 		return selector.All // continue with other elements if All is set
 	})

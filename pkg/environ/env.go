@@ -1,8 +1,9 @@
-package util
+package environ
 
 import (
 	"fmt"
 	ics "github.com/darmiel/golang-ical"
+	"github.com/ralf-life/engine/internal/util"
 	"strconv"
 	"strings"
 	"time"
@@ -13,7 +14,7 @@ type ExprEnvironment struct {
 	Date    CtxTime
 	Start   CtxTime
 	End     CtxTime
-	Context NamedValues
+	Context util.NamedValues
 }
 
 func (e *ExprEnvironment) AORB(val bool, a, b string) string {
@@ -67,6 +68,14 @@ type (
 		event *ics.VEvent
 	}
 )
+
+func NewTime(time time.Time) CtxTime {
+	return CtxTime{time: &time}
+}
+
+func NewEvent(event ics.VEvent) CtxEvent {
+	return CtxEvent{event: &event}
+}
 
 func (c CtxTime) IsMonday() bool {
 	return c.time.Weekday() == time.Monday
@@ -156,10 +165,10 @@ func (e CtxEvent) Location() string {
 }
 
 func (e CtxEvent) HasAttendee(mail string) bool {
-	return HasAttendee(e.event, mail)
+	return util.HasAttendee(e.event, mail)
 }
 
-func CreateExprEnvironmentFromEvent(event *ics.VEvent, sharedContext NamedValues) (*ExprEnvironment, error) {
+func CreateExprEnvironmentFromEvent(event *ics.VEvent, sharedContext util.NamedValues) (*ExprEnvironment, error) {
 	start, err := event.GetStartAt()
 	if err != nil {
 		return nil, fmt.Errorf("get start at err: %v", err)
