@@ -1,3 +1,5 @@
 /.idea
-
 dist/
+cmd/local-test
+cmd/source-test
+cmd/temp

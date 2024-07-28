@@ -1,67 +1,12 @@
 {
   "name": "Rename 'Heinrich Braun' to 'Prolog Master' and only include Mondays after 9 o' clock",
   "cache-duration": "5m",
+  "source": {
+    "type": "http",
+    "url": "https://example.com/data",
+    "method": "POST"
+  },
   "flows": [
-    {
-      "if": "true",
-      "then": [
-        {
-          "debug": "true 1 ok"
-        },
-        {
-          "if": "true",
-          "then": [
-            {
-              "debug": "true 2 ok"
-            },
-            {
-              "if": "true",
-              "then": [
-                {
-                  "debug": "true 3 ok"
-                }
-              ]
-            }
-          ]
-        }
-      ],
-      "else": [
-        {
-          "debug": "ok schade"
-        }
-      ]
-    },
-    {
-      "do": "filters/filter-out"
-    },
-    {
-      "do": "actions/regex-replace",
-      "with": {
-        "match": "(?:Braun\\,\\s*(Heinrich))|(?:(Heinrich) Braun)",
-        "case-sensitive": false,
-        "replace": "Prolog Master \"$1\"",
-        "in": [
-          "title",
-          "description"
-        ]
-      }
-    },
-    {
-      "if": "Date.isWeekend()",
-      "then": [
-        "return"
-      ],
-      "else": [
-        "return"
-      ]
-    },
-    {
-      "if": "(Date.isMonday() or Date.isTuesday()) and Date.isAfter(\"9:00\")",
-      "then": [
-        {
-          "do": "filters/filter-in"
-        }
-      ]
-    }
+
   ]
 }
