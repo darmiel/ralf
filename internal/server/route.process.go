@@ -12,7 +12,6 @@ import (
 	"github.com/ralf-life/engine/pkg/model"
 	"github.com/redis/go-redis/v9"
 	"gopkg.in/yaml.v3"
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -24,38 +23,35 @@ var client = &http.Client{
 	Timeout: 20 * time.Second,
 }
 
-const MaxContentLength = 8 * 1000 * 1000
-
-var ErrExceededContentLength = errors.New("content-length exceeded limit of 8 MB")
-
-func (d *DemoServer) getSourceWithRequest(url string, cache time.Duration) (string, error) {
-	resp, err := client.Get(url)
+func (d *DemoServer) getSourceWithRequest(
+	ctx context.Context,
+	source model.Source,
+	cache time.Duration,
+	cacheKey string,
+) (*ics.Calendar, error) {
+	cal, err := source.Run()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	defer resp.Body.Close()
-
-	if resp.ContentLength > MaxContentLength {
-		return "", ErrExceededContentLength
+	if err = d.red.SetEx(ctx, cacheKey, cal.Serialize(), cache).Err(); err != nil {
+		return nil, err
 	}
-	valBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	val := string(valBytes)
-
-	err = d.red.SetEx(context.TODO(), "source::"+url, val, cache).Err()
-	fmt.Println("[" + url + "] from request")
-	return val, err
+	return cal, nil
 }
 
-func (d *DemoServer) getSource(url string, cache time.Duration) (string, error) {
-	body, err := d.red.Get(context.TODO(), "source::"+url).Result()
-	if err != nil && err == redis.Nil {
-		return d.getSourceWithRequest(url, cache)
+func (d *DemoServer) getSource(ctx context.Context, source model.Source, cache time.Duration) (*ics.Calendar, error) {
+	cacheKey, err := source.CacheKey()
+	if err != nil {
+		return nil, err
 	}
-	fmt.Println("[" + url + "] from cache")
-	return body, err
+	body, err := d.red.Get(ctx, cacheKey).Result()
+	if err != nil {
+		if !errors.Is(err, redis.Nil) {
+			return nil, err
+		}
+		return d.getSourceWithRequest(ctx, source, cache, cacheKey)
+	}
+	return ics.ParseCalendar(strings.NewReader(body))
 }
 
 func (d *DemoServer) routeProcessDo(content []byte, ctx *fiber.Ctx) error {
@@ -67,9 +63,13 @@ func (d *DemoServer) routeProcessDo(content []byte, ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid RALF-SPEC ("+err.Error()+")")
 	}
 
-	// validate profile
-	if strings.TrimSpace(profile.Source) == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "`source` required")
+	if len(profile.Source) != 1 {
+		return fiber.NewError(fiber.StatusBadRequest, "only one source is allowed")
+	}
+	source := profile.Source[0]
+
+	if err := source.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid source ("+err.Error()+")")
 	}
 
 	// require a cache duration of at least 120s
@@ -78,15 +78,9 @@ func (d *DemoServer) routeProcessDo(content []byte, ctx *fiber.Ctx) error {
 		cd = 2 * time.Minute
 	}
 
-	body, err := d.getSource(profile.Source, cd)
+	cal, err := d.getSource(ctx.Context(), source, cd)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "cannot request source ("+err.Error()+")")
-	}
-
-	// parse calendar
-	cal, err := ics.ParseCalendar(strings.NewReader(body))
-	if err != nil {
-		return fiber.NewError(fiber.StatusExpectationFailed, "failed to parse source calendar ("+err.Error()+")")
 	}
 
 	// create context and run flow

@@ -5,7 +5,7 @@ import (
 	ics "github.com/darmiel/golang-ical"
 	"github.com/ralf-life/engine/pkg/actions"
 	"github.com/ralf-life/engine/pkg/engine"
-	model2 "github.com/ralf-life/engine/pkg/model"
+	"github.com/ralf-life/engine/pkg/model"
 	"io"
 	"os"
 )
@@ -16,21 +16,21 @@ func main() {
 
 ///
 
-func testYaml(reader io.Reader) *model2.Profile {
+func testYaml(reader io.Reader) *model.Profile {
 	// parse profile "example-profile.yaml"
-	profile, err := model2.ParseProfileFromYAML(reader)
+	profile, err := model.ParseProfileFromYAML(reader)
 	if err != nil {
 		panic(err)
 	}
 	return profile
 }
 
-func testJson(reader io.Reader) *model2.Profile {
+func testJson(reader io.Reader) *model.Profile {
 	data, err := io.ReadAll(reader)
 	if err != nil {
 		panic(err)
 	}
-	profile, err := model2.ParseProfileFromJSON(data)
+	profile, err := model.ParseProfileFromJSON(data)
 	if err != nil {
 		panic(err)
 	}
@@ -44,12 +44,17 @@ func localTest() {
 	}
 	defer f.Close()
 
-	var profile *model2.Profile
+	var profile *model.Profile
 	profile = testYaml(f)
-	// profile = testJson(f)
+	//profile = testJson(f)
 
 	if profile == nil {
 		fmt.Println("profile was nil.")
+		return
+	}
+
+	fmt.Printf("Profile: %+v\n", profile)
+	if true {
 		return
 	}
 
