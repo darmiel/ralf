@@ -220,12 +220,15 @@ func parseEvents(doc *goquery.Document, calendar *ics.Calendar, selector Selecto
 
 		event := ics.NewEvent(strconv.Itoa(int(*count)))
 		if err = assignEventDetails(event, selection, selector); err != nil {
+			fmt.Println("error:", err)
 			if errors.Is(err, ErrSkip) {
 				err = nil
 				return selector.All
 			}
 			return false
 		}
+
+		fmt.Printf("Adding event: %+v\n", event)
 
 		calendar.AddVEvent(event)
 		return selector.All // continue with other elements if All is set
@@ -261,6 +264,7 @@ func assignEventDetails(event *ics.VEvent, root *goquery.Selection, selector Sel
 		if !selector.Soft {
 			return fmt.Errorf("%w: %s", ErrEmptySelection, selector.Start)
 		}
+		fmt.Println("start text was empty", selector.Start)
 		return ErrSkip
 	}
 	startDate, err := time.Parse(selector.StartFormat, startText)
@@ -275,10 +279,30 @@ func assignEventDetails(event *ics.VEvent, root *goquery.Selection, selector Sel
 		}
 		return ErrSkip
 	}
-	if startText == endText {
-		// if the start and end dates are the same, we assume it's a 1-full day event
-		event.SetAllDayStartAt(startDate)
-		event.SetAllDayEndAt(startDate)
+	if startText == endText && startDate.Hour() == 0 && startDate.Minute() == 0 && startDate.Second() == 0 {
+		startDateZero := time.Date(
+			startDate.Year(),
+			startDate.Month(),
+			startDate.Day(),
+			0,
+			0,
+			0,
+			0,
+			startDate.Location(),
+		)
+		event.SetStartAt(startDateZero)
+
+		endDateZero := time.Date(
+			startDate.Year(),
+			startDate.Month(),
+			startDate.Day(),
+			23,
+			59,
+			59,
+			0,
+			startDate.Location(),
+		)
+		event.SetEndAt(endDateZero)
 	} else {
 		var endDate time.Time
 		if endDate, err = time.Parse(selector.EndFormat, endText); err != nil {
@@ -288,6 +312,8 @@ func assignEventDetails(event *ics.VEvent, root *goquery.Selection, selector Sel
 		event.SetStartAt(startDate)
 		event.SetEndAt(endDate)
 	}
+
+	event.SetDtStampTime(time.Now())
 
 	if err = assignOptional(selector.Summary, event.SetSummary, root, &selector); err != nil {
 		return err
