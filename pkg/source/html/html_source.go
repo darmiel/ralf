@@ -292,16 +292,7 @@ func assignEventDetails(event *ics.VEvent, root *goquery.Selection, selector Sel
 		)
 		event.SetStartAt(startDateZero)
 
-		endDateZero := time.Date(
-			startDate.Year(),
-			startDate.Month(),
-			startDate.Day(),
-			23,
-			59,
-			59,
-			0,
-			startDate.Location(),
-		)
+		endDateZero := startDateZero.Add(time.Hour * 24)
 		event.SetEndAt(endDateZero)
 	} else {
 		var endDate time.Time
