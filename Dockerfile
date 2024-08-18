@@ -1,7 +1,7 @@
 FROM golang:1.20 AS builder
 
 LABEL maintainer="darmiel <hi@d2a.io>"
-LABEL org.opencontainers.image.source = "https://github.com/RALF-Life/engine"
+LABEL org.opencontainers.image.source = "https://github.com/darmiel/ralf"
 
 WORKDIR /usr/src/app
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]

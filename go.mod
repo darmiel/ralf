@@ -1,4 +1,4 @@
-module github.com/ralf-life/engine
+module github.com/darmiel/ralf
 
 go 1.20
 

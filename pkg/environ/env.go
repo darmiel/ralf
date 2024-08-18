@@ -3,7 +3,7 @@ package environ
 import (
 	"fmt"
 	ics "github.com/darmiel/golang-ical"
-	"github.com/ralf-life/engine/internal/util"
+	"github.com/darmiel/ralf/internal/util"
 	"strconv"
 	"strings"
 	"time"

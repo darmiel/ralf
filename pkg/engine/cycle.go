@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"github.com/antonmedv/expr"
 	ics "github.com/darmiel/golang-ical"
-	"github.com/ralf-life/engine/internal/util"
-	"github.com/ralf-life/engine/pkg/actions"
-	"github.com/ralf-life/engine/pkg/environ"
-	"github.com/ralf-life/engine/pkg/model"
+	"github.com/darmiel/ralf/internal/util"
+	"github.com/darmiel/ralf/pkg/actions"
+	"github.com/darmiel/ralf/pkg/environ"
+	"github.com/darmiel/ralf/pkg/model"
 	"strings"
 )
 

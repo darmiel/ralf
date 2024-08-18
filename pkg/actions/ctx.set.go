@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/antonmedv/expr"
-	"github.com/ralf-life/engine/internal/util"
-	"github.com/ralf-life/engine/pkg/environ"
+	"github.com/darmiel/ralf/internal/util"
+	"github.com/darmiel/ralf/pkg/environ"
 	"strings"
 )
 

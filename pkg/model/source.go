@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	ics "github.com/darmiel/golang-ical"
-	htmlsource "github.com/ralf-life/engine/pkg/source/html"
-	httpsource "github.com/ralf-life/engine/pkg/source/http"
+	htmlsource "github.com/darmiel/ralf/pkg/source/html"
+	httpsource "github.com/darmiel/ralf/pkg/source/http"
 	"go.mongodb.org/mongo-driver/bson"
 	"gopkg.in/yaml.v3"
 )
