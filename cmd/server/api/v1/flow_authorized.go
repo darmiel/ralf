@@ -81,10 +81,34 @@ func (f *AuthorizedFlowRoutes) saveFlowHandler(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid request payload: "+err.Error())
 	}
 
-	flow.UserID = u.UserID
-	if flow.FlowID == "" {
-		flow.FlowID = uuid.New().String()
+	var action string
+
+	// if a flow ID is provided, make sure it belongs to the user
+	if flow.FlowID != "" {
+		action = "update"
+
+		// get the flow
+		oldFlow, err := f.storageService.GetFlow(c.Context(), flow.FlowID)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, "cannot find flow: "+err.Error())
+		}
+		// make sure the flow belongs to the user
+		if oldFlow.UserID != u.UserID {
+			return fiber.NewError(fiber.StatusUnauthorized, "flow does not belong to user")
+		}
+	} else {
+		action = "create"
+
+		// if no flow ID is provided (create new flow), find new free ID (max tries: 10)
+		for i := 0; i < 10; i++ {
+			flow.FlowID = uuid.New().String()
+			if _, err := f.storageService.GetFlow(c.Context(), flow.FlowID); err != nil {
+				break
+			}
+		}
 	}
+
+	flow.UserID = u.UserID
 	flow.CacheDuration = constraints.ClampCacheModelDuration(flow.CacheDuration)
 
 	if err := f.storageService.SaveFlow(c.Context(), &flow); err != nil {
@@ -96,10 +120,10 @@ func (f *AuthorizedFlowRoutes) saveFlowHandler(c *fiber.Ctx) error {
 		Address:   c.IP(),
 		Timestamp: time.Now(),
 		Success:   true,
-		Action:    "update",
+		Action:    action,
 	}
 	if err := f.storageService.SaveHistory(c.Context(), h); err != nil {
-		log.Warnf("cannot save UPDATE history: %s", err.Error())
+		log.Warnf("cannot save %s history: %s", action, err.Error())
 	}
 
 	return c.Status(200).SendString("SavedFlow saved")

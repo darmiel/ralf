@@ -37,7 +37,9 @@ func NewMongoStorageService(uri, dbName string) *MongoStorageService {
 // GetFlow retrieves a flow by its ID.
 func (m *MongoStorageService) GetFlow(ctx context.Context, flowID string) (*SavedFlow, error) {
 	var flow SavedFlow
-	if err := m.flowColl.FindOne(ctx, bson.M{"flow_id": flowID}).Decode(&flow); err != nil {
+	if err := m.flowColl.
+		FindOne(ctx, bson.M{"flow_id": flowID}).
+		Decode(&flow); err != nil {
 		return nil, err
 	}
 	return &flow, nil
@@ -45,14 +47,20 @@ func (m *MongoStorageService) GetFlow(ctx context.Context, flowID string) (*Save
 
 func (m *MongoStorageService) GetFlowJSON(ctx context.Context, flowID string) (interface{}, error) {
 	var flow SavedFlow
-	if err := m.flowColl.FindOne(ctx, bson.M{"flow_id": flowID}).Decode(&flow); err != nil {
+	if err := m.flowColl.
+		FindOne(ctx, bson.M{"flow_id": flowID}).
+		Decode(&flow); err != nil {
 		return nil, err
 	}
 	return flow, nil
 }
 
 func (m *MongoStorageService) GetFlowHistory(ctx context.Context, flowID string, limit int) ([]History, error) {
-	cur, err := m.histColl.Find(ctx, bson.M{"flow_id": flowID}, options.Find().SetSort(bson.M{"timestamp": -1}).SetLimit(int64(limit)))
+	cur, err := m.histColl.Find(ctx, bson.M{"flow_id": flowID},
+		options.Find().
+			SetSort(bson.M{"timestamp": -1}).
+			SetLimit(int64(limit)),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +89,14 @@ func (m *MongoStorageService) GetFlowsByUser(ctx context.Context, userID string)
 }
 
 func (m *MongoStorageService) SaveFlow(ctx context.Context, flow *SavedFlow) error {
-	_, err := m.flowColl.UpdateOne(ctx, bson.M{"flow_id": flow.FlowID}, bson.M{"$set": flow}, options.Update().SetUpsert(true))
+	_, err := m.flowColl.
+		UpdateOne(ctx, bson.M{
+			"flow_id": flow.FlowID,
+		}, bson.M{
+			"$set": flow,
+		}, options.Update().
+			SetUpsert(true),
+		)
 	return err
 }
 

@@ -1,3 +1,6 @@
+//go:build server
+// +build server
+
 package main
 
 import (
@@ -67,6 +70,7 @@ func setupStorageService() service.StorageService {
 
 	switch storageProvider {
 	case "mongo":
+		log.Println("Using MongoDB storage service")
 		mongoURI := os.Getenv("MONGODB_URI")
 		dbName := os.Getenv("MONGODB_DB")
 		if mongoURI == "" || dbName == "" {
@@ -88,6 +92,7 @@ func setupAuthService() service.AuthService {
 
 	switch authProvider {
 	case "firebase":
+		log.Println("Using Firebase authentication service")
 		firebaseCredentials := os.Getenv("FIREBASE_CREDENTIALS")
 		if firebaseCredentials == "" {
 			log.Fatal("Firebase credentials file is required for Firebase authentication")
@@ -109,6 +114,7 @@ func setupCacheService() service.CacheService {
 
 	switch cacheProvider {
 	case "redis":
+		log.Println("Using Redis cache service")
 		redisAddr := os.Getenv("REDIS_ADDR")
 		redisPassword := os.Getenv("REDIS_PASSWORD")
 		redisDBStr := os.Getenv("REDIS_DB")
@@ -120,6 +126,7 @@ func setupCacheService() service.CacheService {
 
 		return service.NewRedisCacheService(redisAddr, redisPassword, redisDB)
 	default:
+		log.Println("Using in-memory cache service")
 		// Use in-memory cache by default
 		return service.NewLocalCacheService(5*time.Minute, 10*time.Minute)
 	}
