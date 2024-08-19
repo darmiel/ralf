@@ -24,13 +24,13 @@ go build -tags server -o ralf-server ./cmd/server
 ```
 ## Examples
 
-You can find a few example flows in the [`examples/`]("examples/") directory.
+You can find a few example flows in the [`examples/`](examples/) directory.
 
 ## Usage
 
 ### Source
 
-Define the source of your calendar data, either HTTP or HTML. HTML sources require selectors to parse event details. See [`examples/`]("examples/") for more details.
+Define the source of your calendar data, either HTTP or HTML. HTML sources require selectors to parse event details. See [`examples/`](examples/) for more details.
 
 ### Flows
 
