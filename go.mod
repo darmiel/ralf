@@ -63,6 +63,11 @@ require (
 )
 
 require (
+	github.com/rs/xid v1.5.0
+	go.uber.org/zap v1.27.0
+)
+
+require (
 	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
@@ -72,4 +77,5 @@ require (
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
+	go.uber.org/multierr v1.11.0 // indirect
 )

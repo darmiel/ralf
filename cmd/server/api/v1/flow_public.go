@@ -11,14 +11,14 @@ import (
 
 type FlowRoutes struct {
 	storageService service.StorageService
-	processRoutes  *ProcessRoutes
+	publicRoutes   *PublicRoutes
 }
 
 // NewFlowRoutes creates a new FlowRoutes with the necessary dependencies.
-func NewFlowRoutes(storageService service.StorageService, processRoutes *ProcessRoutes) *FlowRoutes {
+func NewFlowRoutes(storageService service.StorageService, processRoutes *PublicRoutes) *FlowRoutes {
 	return &FlowRoutes{
 		storageService: storageService,
-		processRoutes:  processRoutes,
+		publicRoutes:   processRoutes,
 	}
 }
 
@@ -40,7 +40,7 @@ func (f *FlowRoutes) getFlowICSHandler(ctx *fiber.Ctx) error {
 		Flows:         flow.Flows,
 	}
 
-	cal, debugMessages, err := f.processRoutes.executeFlow(ctx.Context(), &profile, debug, verbose)
+	cal, debugMessages, err := f.publicRoutes.executeFlow(ctx.Context(), &profile, debug, verbose)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
@@ -54,31 +54,4 @@ func (f *FlowRoutes) getFlowICSHandler(ctx *fiber.Ctx) error {
 	// Append content-type and return calendar
 	ctx.Set("Content-Type", "text/calendar")
 	return ctx.Status(200).SendString(cal.Serialize())
-}
-
-// getFlowJSONHandler is the handler for GET /:flow.json.
-func (f *FlowRoutes) getFlowJSONHandler(c *fiber.Ctx) error {
-	flowID := c.Params("flow")
-	flow, err := f.storageService.GetFlowJSON(c.Context(), flowID)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "cannot find flow: "+err.Error())
-	}
-	return c.Status(200).JSON(flow)
-}
-
-// getFlowHistoryHandler is the handler for GET /:flow/history.
-func (f *FlowRoutes) getFlowHistoryHandler(c *fiber.Ctx) error {
-	flowID := c.Params("flow")
-	limit := constraints.ClampHistoryLimit(c.QueryInt("limit", 100))
-
-	history, err := f.storageService.GetFlowHistory(c.Context(), flowID, limit)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "cannot retrieve history: "+err.Error())
-	}
-
-	if len(history) > limit {
-		history = history[:limit]
-	}
-
-	return c.Status(200).JSON(history)
 }

@@ -9,7 +9,6 @@ import (
 // StorageService defines the interface for storage services.
 type StorageService interface {
 	GetFlow(ctx context.Context, flowID string) (*SavedFlow, error)
-	GetFlowJSON(ctx context.Context, flowID string) (interface{}, error)
 	GetFlowHistory(ctx context.Context, flowID string, limit int) ([]History, error)
 	DeleteFlow(ctx context.Context, flowID string) error
 	GetFlowsByUser(ctx context.Context, userID string) ([]SavedFlow, error)

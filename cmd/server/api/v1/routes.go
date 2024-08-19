@@ -13,19 +13,18 @@ func RegisterRoutes(
 ) {
 	// register the routes for the /process endpoint.
 	// these routes can be used without authentication.
-	processRoutes := NewProcessRoutes(cacheService)
-	router.Get("/process", processRoutes.processGetHandler)
-	router.Post("/process", processRoutes.processPostHandler)
+	publicRoutes := NewPublicRoutes(cacheService)
+	router.Get("/process", publicRoutes.processGetHandler)
+	router.Post("/process", publicRoutes.processPostHandler)
+	router.Post("/minify", publicRoutes.routeMinifyYAML)
 
 	// for the next routes, the storage service is required
 	if storageService == nil {
 		return
 	}
 
-	flowRoutes := NewFlowRoutes(storageService, processRoutes)
+	flowRoutes := NewFlowRoutes(storageService, publicRoutes)
 	router.Get("/:flow.ics", flowRoutes.getFlowICSHandler)
-	router.Get("/:flow.json", flowRoutes.getFlowJSONHandler)
-	router.Get("/:flow/history", flowRoutes.getFlowHistoryHandler)
 
 	// for the next routes, also the auth service is required
 	if authService == nil {
@@ -33,8 +32,12 @@ func RegisterRoutes(
 	}
 
 	router.Use(authService.Middleware())
-	authFlowRoutes := NewAuthorizedFlowRoutes(storageService, processRoutes, authService)
-	router.Post("/flows", authFlowRoutes.saveFlowHandler)
-	router.Delete("/:flow", authFlowRoutes.deleteFlowHandler)
+	authFlowRoutes := NewAuthorizedFlowRoutes(storageService, publicRoutes, authService)
 	router.Get("/flows", authFlowRoutes.getUserFlowsHandler)
+	router.Post("/flows", authFlowRoutes.saveFlowHandler)
+
+	router.Use("/:flow", authFlowRoutes.flowLocalAccessCheckMiddleware)
+	router.Delete("/:flow", authFlowRoutes.deleteFlowHandler)
+	router.Get("/:flow/raw", authFlowRoutes.getFlowJSONHandler)
+	router.Get("/:flow/history", authFlowRoutes.getFlowHistoryHandler)
 }

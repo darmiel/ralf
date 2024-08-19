@@ -2,11 +2,11 @@ package service
 
 import (
 	"context"
-	"log"
-
+	"github.com/darmiel/ralf/cmd/server/logging"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.uber.org/zap"
 )
 
 // make sure MongoStorageService implements StorageService
@@ -22,9 +22,10 @@ type MongoStorageService struct {
 
 // NewMongoStorageService creates a new MongoStorageService.
 func NewMongoStorageService(uri, dbName string) *MongoStorageService {
+	logger := logging.Get()
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
-		log.Fatalf("Failed to connect to MongoDB: %v", err)
+		logger.Error("Failed to connect to MongoDB", zap.Error(err))
 	}
 	return &MongoStorageService{
 		client:   client,
@@ -43,16 +44,6 @@ func (m *MongoStorageService) GetFlow(ctx context.Context, flowID string) (*Save
 		return nil, err
 	}
 	return &flow, nil
-}
-
-func (m *MongoStorageService) GetFlowJSON(ctx context.Context, flowID string) (interface{}, error) {
-	var flow SavedFlow
-	if err := m.flowColl.
-		FindOne(ctx, bson.M{"flow_id": flowID}).
-		Decode(&flow); err != nil {
-		return nil, err
-	}
-	return flow, nil
 }
 
 func (m *MongoStorageService) GetFlowHistory(ctx context.Context, flowID string, limit int) ([]History, error) {
