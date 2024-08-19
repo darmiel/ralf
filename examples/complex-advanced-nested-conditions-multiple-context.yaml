@@ -1,0 +1,82 @@
+name: Advanced Event Processing with Regex and Context
+source:
+  type: html
+  url: "https://example.com/advanced-events.html"
+  selectors:
+    - parent: ".event"
+      start: ".date"
+      start_format: "2006-01-02"
+      end: ".date-end"
+      end_format: "2006-01-02"
+      summary: ".summary"
+      description: ".details"
+      location: ".place"
+      url: ".link"
+      organizer: ".organizer-email"
+  cache-duration: "24h"
+
+flows:
+  # Initial context setup to check multiple event properties
+  - do: ctx/set
+    with:
+      $is_weekend: "Date.IsSaturday() || Date.IsSunday()"
+      $has_confidential_info: "Event.Description().Matches('(?i)confidential')"
+      $summary_important: "Event.Summary().Matches('(?i)urgent|important')"
+      $location_check: "Event.Location().Contains('Headquarters')"
+
+  # Nested condition based on multiple context variables
+  - if: "$is_weekend"
+    then:
+      - if: "$summary_important"
+        then:
+          - if: "$has_confidential_info"
+            then:
+              # Redact confidential info and log event for internal tracking
+              - do: actions/regex-replace
+                with:
+                  match: "(?i)confidential"
+                  replace: "[REDACTED]"
+                  in: ["description"]
+              - do: ctx/set
+                with:
+                  $internal_log: "Redacted confidential info in weekend urgent event"
+              - do: filters/filter-in
+            else:
+              - do: filters/filter-out
+        else:
+          # Only include non-important events if they are located at Headquarters
+          - if: "$location_check"
+            then:
+              - do: filters/filter-in
+            else:
+              - do: filters/filter-out
+  - else:
+      # Weekday processing with additional nested checks
+      - if: "$summary_important"
+        then:
+          - if: "$location_check"
+            then:
+              # Transform summary to emphasize urgency
+              - do: actions/regex-replace
+                with:
+                  match: "(?i)(urgent|important)"
+                  replace: "**$1**"
+                  in: ["summary"]
+              - do: filters/filter-in
+            else:
+              - do: ctx/set
+                with:
+                  $additional_check_needed: true
+              - do: filters/filter-out
+        else:
+          - do: filters/filter-out
+
+  # Post-processing for logging or additional actions
+  - if: "$internal_log"
+    then:
+      - do: actions/add-attendee
+        with:
+          mail: "compliance@company.com"
+          role: "optional"
+          status: "needs-action"
+

@@ -1,0 +1,62 @@
+name: Complex Contextual Processing
+source:
+  type: http
+  url: "https://example.com/complex-calendar.ics"
+  method: GET
+cache-duration: "12h"
+
+flows:
+  # Set initial context variables
+  - do: ctx/set
+    with:
+      $initial_check: "Event.Categories().Contains('Urgent')"
+      $organizer_is_vip: "Event.Organizer().Contains('vip@company.com')"
+
+  # First conditional check based on the initial context
+  - if: "$initial_check"
+    then:
+      - if: "$organizer_is_vip"
+        then:
+          # Further nested condition based on event summary
+          - if: "Event.Summary().Contains('Critical Update')"
+            then:
+              - do: actions/add-alarm
+                with:
+                  action: "display"
+                  trigger: "-PT10M"
+                  duration: "PT1H"
+                  repeat: "3"
+              - do: filters/filter-in
+            else:
+              # Store a flag in the context for future flows
+              - do: ctx/set
+                with:
+                  $needs_manual_review: true
+                  $manual_review_reason: "Critical update missing from VIP organizer"
+        else:
+          # Check for specific words in the event description
+          - if: "Event.Description().Matches('(?i)confidential')"
+            then:
+              - do: actions/regex-replace
+                with:
+                  match: "(?i)confidential"
+                  replace: "[REDACTED]"
+                  in: ["description"]
+              - do: filters/filter-in
+            else:
+              - do: filters/filter-out
+  - else:
+      # If the event doesn't meet the initial criteria, log for manual review if necessary
+      - if: "$needs_manual_review"
+        then:
+          - do: ctx/set
+            with:
+              $review_log: "Event requiring manual review: $manual_review_reason"
+          - do: actions/add-attendee
+            with:
+              mail: "reviewer@company.com"
+              role: "optional"
+              status: "needs-action"
+        else:
+          - do: filters/filter-out
+
