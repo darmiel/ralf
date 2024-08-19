@@ -1,74 +1,52 @@
-# engine
+# RALF
 
-Filter .ics-files using simple YAML for RALF.
+**RALF** is a powerful, and customizable calendar filtering and modification tool. It allows you to define complex workflows for processing calendar events from various sources, apply dynamic filters, transform event properties, and even manage context-driven event manipulation.
 
-## Example
+[ [Installation](#installation) | [Usage](#usage) | [Examples](#examples) | [Configuration](#configuration) | [License](#license) ]
 
-```yaml
----
-# name of the filter profile; shown in the RALF-dashboard
-name: >
-  Rename 'TINF[...][...][...]' to [...]-[...]-[...], e. g. TINF14B1 --> B-14-1 
-  and only include courses on Mondays and Tuesdays after 9 AM"
+## Installation
 
-# time to cache a response from an .ics source to prevent rate limiting
-cache-duration: 5m
+### Prerequisites
 
-# flows are executed in order
-flows:
-  # filter out all courses by default.
-  # we can filter them in later using the `filters/filter-in` action.
-  - do: filters/filter-out
-    
-  # only include mondays and tuesdays after 10:00
-  - if: '(Date.isMonday() or Date.isTuesday()) and Date.isAfter("9:00")'
-    then:
-      # filter in course
-      - do: filters/filter-in
-  
-      # rename course
-      - do: actions/regex-replace
-        with:
-          match: 'TINF(\d+)([A-Z]+)(\d+)'
-          in: [ "DESCRIPTION"]
-          replace: '$2-$1-$3'
-          
-      # btw. you can also nest if-s
-      - if: ...
-        then:
-          - do: ...
-        else:
-          - ...
-...
+- **Go 1.22+**: Ensure you have Go installed. If not, download and install it from [golang.org](https://golang.org/).
+
+### Clone the Repository
+
+```console
+git clone https://github.com/darmiel/ralf.git
+cd ralf
 ```
 
-## WIP: Context based actions
+### Build the Server
 
-This action should put the room into the description of an event
+```console
+go build -tags server -o ralf-server ./cmd/server
+```
+## Examples
 
-> **Note**: This is a work in progress and does not work at the moment. The syntax can vary in the future.
+You can find a few example flows in the [`examples/`]("examples/") directory.
+
+## Usage
+
+### Source
+
+Define the source of your calendar data, either HTTP or HTML. HTML sources require selectors to parse event details. See [`examples/`]("examples/") for more details.
+
+### Flows
+
+Flows are the heart of RALF, where you define the logic for filtering and transforming calendar events. Use `if`, `then`, `else` for conditional logic, and `do` for actions.
+
+### Context Management
+
+Context variables allow you to dynamically influence the flow logic, storing intermediate results or flags for later use. Prefix the key with `$` if you want to use expressions.
 
 ```yaml
----
-name: >
-  Write the room into the description
-cache-duration: 5m
-flows:
-  
-  # extract Room name from the LOCATION attribute
-  - do: actions/get-attribute
-    with:
-      attribute: "LOCATION"
-      into: Room
-      
-  # check if event had a location specified
-  - if: 'Context.Current.Room != ""'
-    then:
-      
-      # prepend Room name to DESCRIPTION attribute
-      - do: actions/set-attribute
-        with:
-          attribute: "DESCRIPTION"
-          to: "'[' + Context.Current.Room + '] ' + Event.Description"
-...
+- do: ctx/set
+  with:
+    static: "This is always the same"
+    $flag: "Event.Description().Contains('Confidential')"
 ```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
