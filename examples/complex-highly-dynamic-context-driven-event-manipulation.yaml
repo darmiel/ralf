@@ -1,0 +1,83 @@
+name: Highly Dynamic Contextual Event Manipulation
+source:
+  type: html
+  url: "https://example.com/dynamic-events.html"
+  selectors:
+    - parent: ".event-item"
+      start: ".event-start"
+      start_format: "2006-01-02T15:04"
+      end: ".event-end"
+      end_format: "2006-01-02T15:04"
+      summary: ".event-title"
+      description: ".event-description"
+      location: ".event-location"
+      organizer: ".event-organizer"
+  cache-duration: "3h"
+
+flows:
+  # Initial dynamic context creation based on complex expressions
+  - do: ctx/set
+    with:
+      $is_critical: "Event.Summary().Contains('Critical') && !Event.Description().Contains('Optional')"
+      $should_redact: "Event
+      $should_redact: "Event.Description().Matches('(?i)confidential|private|internal use only')"
+      $is_high_priority: "Event.Categories().Contains('High Priority')"
+      $event_day: "Date.Format('Monday')"
+      $weekend_event: "$event_day == 'Saturday' || $event_day == 'Sunday'"
+
+  # Nested conditional logic leveraging dynamic context variables
+  - if: "$is_critical"
+    then:
+      - if: "$should_redact"
+        then:
+          # Redact sensitive information in critical events
+          - do: actions/regex-replace
+            with:
+              match: "(?i)(confidential|private|internal use only)"
+              replace: "[REDACTED]"
+              in: ["description"]
+          - do: filters/filter-in
+        else:
+          # Include the critical event without redaction
+          - do: filters/filter-in
+    else:
+      # Non-critical events with additional nested conditions
+      - if: "$is_high_priority"
+        then:
+          # If high priority, ensure it has a display alarm set
+          - do: actions/add-alarm
+            with:
+              action: "display"
+              trigger: "-PT1H"
+          - do: filters/filter-in
+        else:
+          # Further check if the event occurs during the weekend
+          - if: "$weekend_event"
+            then:
+              - do: ctx/set
+                with:
+                  $weekend_processing_log: "Processing weekend event with low priority"
+              - do: actions/add-attendee
+                with:
+                  mail: "weekend@company.com"
+                  role: "optional"
+                  status: "needs-action"
+              - do: filters/filter-in
+            else:
+              # Exclude all non-critical, non-high-priority, weekday events
+              - do: filters/filter-out
+
+  # Post-processing to handle logs and notifications
+  - if: "$weekend_processing_log"
+    then:
+      - do: actions/add-attendee
+        with:
+          mail: "log@company.com"
+          role: "non-participant"
+          status: "completed"
+      - do: ctx/set
+        with:
+          $notification_log: "Weekend event processed: $weekend_processing_log"
+    else:
+      - do: filters/filter-out
+
