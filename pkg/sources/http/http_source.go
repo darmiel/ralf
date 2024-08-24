@@ -5,6 +5,7 @@ import (
 	"fmt"
 	ics "github.com/darmiel/golang-ical"
 	"github.com/darmiel/ralf/internal/util"
+	"github.com/darmiel/ralf/pkg/sources"
 	"io"
 	"net/http"
 	"strings"
@@ -21,7 +22,9 @@ const (
 	DefaultMethod = "GET"
 )
 
-type Options struct {
+type Source struct {
+	// inline source.Type
+	sources.Type `json:",inline" yaml:",inline" bson:",inline"`
 	// URL to fetch
 	URL string `json:"url" yaml:"url" bson:"url"`
 	// Method to use
@@ -35,12 +38,12 @@ type Options struct {
 }
 
 // KeyIdentifier returns the key identifier for the source
-func (o *Options) KeyIdentifier() string {
+func (o *Source) KeyIdentifier() string {
 	return "http"
 }
 
 // Validate validates the source options
-func (o *Options) Validate() error {
+func (o *Source) Validate() error {
 	if o.URL == "" {
 		return ErrURLRequired
 	}
@@ -48,12 +51,12 @@ func (o *Options) Validate() error {
 }
 
 // CacheKey returns the cache key for the source
-func (o *Options) CacheKey() (string, error) {
+func (o *Source) CacheKey() (string, error) {
 	return util.CreateCacheKey(o)
 }
 
 // MakeRequest makes the HTTP request
-func (o *Options) MakeRequest() (*http.Response, error) {
+func (o *Source) MakeRequest() (*http.Response, error) {
 	method := o.Method
 	if method == "" {
 		method = DefaultMethod
@@ -84,7 +87,7 @@ func (o *Options) MakeRequest() (*http.Response, error) {
 }
 
 // Run executes the source
-func (o *Options) Run() (*ics.Calendar, error) {
+func (o *Source) Run() (*ics.Calendar, error) {
 	resp, err := o.MakeRequest()
 	if err != nil {
 		return nil, err
@@ -94,7 +97,7 @@ func (o *Options) Run() (*ics.Calendar, error) {
 	return ics.ParseCalendar(resp.Body)
 }
 
-func (o *Options) String() string {
+func (o *Source) String() string {
 	method := o.Method
 	if method == "" {
 		method = DefaultMethod

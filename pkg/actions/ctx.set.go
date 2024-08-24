@@ -16,7 +16,7 @@ func (c *CtxSetAction) Identifier() string {
 }
 
 var (
-	ErrKeyInSharedContext = errors.New("key already in shared context. set $overwrite to true to overwrite")
+	ErrKeyInSharedContext = errors.New("key already in shared context. set #overwrite to true to overwrite")
 	ErrNotString          = errors.New("dynamic values must be of type string")
 )
 
@@ -26,7 +26,7 @@ type ctxSetExprEnv struct {
 }
 
 func (c *CtxSetAction) Execute(ctx *Context) (ActionMessage, error) {
-	overwrite, err := optional(ctx.With, "$overwrite", false)
+	overwrite, err := optional(ctx.With, "#overwrite", true)
 	if err != nil {
 		return nil, err
 	}

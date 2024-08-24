@@ -72,7 +72,6 @@ func convertRawJSONToFlow(msg *json.RawMessage) (Flow, error) {
 }
 
 func (f *Flows) UnmarshalJSON(data []byte) error {
-	// fmt.Println("called unmarshal json with data", string(data))
 	var arr []*json.RawMessage
 	if err := json.Unmarshal(data, &arr); err != nil {
 		return err

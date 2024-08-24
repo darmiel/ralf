@@ -5,18 +5,16 @@ before:
 
 builds:
   - id: "server-build"
-    main: ./cmd/server
+    main: ./cmd/server/main.go
     binary: engine-server
-    # Default: 's -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.builtBy=goreleaser'
-
     env:
       - CGO_ENABLED=0
-
+    flags:
+      - -tags=server
     goos:
       - darwin
       - linux
       - windows
-
     goarch:
       - '386'
       - amd64

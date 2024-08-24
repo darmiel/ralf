@@ -1,11 +1,31 @@
-version: "3"
-
 services:
   redis:
     image: redis
-  engine:
+
+  mongo:
+    image: mongo
+    volumes:
+      - ./data:/data/db
+
+  ralf-server:
     build:
       context: .
       dockerfile: Dockerfile
+    environment:
+      APP_ENV: production
+      # storage: can be "mongo" or "" for no storage
+      STORAGE_PROVIDER: "mongo"
+      MONGODB_URI: "mongodb://mongo:27017"
+      MONGODB_DB: "engine"
+      # cache: can be "redis" or "" for in-memory
+      CACHE_PROVIDER: "redis"
+      REDIS_ADDR: "redis:6379"
+      REDIS_PASSWORD: ""
+      REDIS_DB: "0"
+      # auth: can be "firebase" or "" for no auth
+      AUTH_PROVIDER: "firebase"
+      FIREBASE_CREDENTIALS_PATH: "/auth/firebase-credentials.json"
+    volumes:
+      - ./firebase-credentials.json:/auth/firebase-credentials.json
     ports:
-      - "127.0.0.1:1887:80"
+      - "127.0.0.1:1887:8080"

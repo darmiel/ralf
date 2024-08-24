@@ -1,4 +1,4 @@
-FROM golang:1.20 AS builder
+FROM golang:1.22.5 AS builder
 
 LABEL maintainer="darmiel <hi@d2a.io>"
 LABEL org.opencontainers.image.source = "https://github.com/darmiel/ralf"
