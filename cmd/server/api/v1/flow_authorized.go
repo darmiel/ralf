@@ -115,6 +115,7 @@ func (f *AuthorizedFlowRoutes) flowLocalAccessCheckMiddleware(c *fiber.Ctx) erro
 		return ErrFlowDoesNotBelongToUser
 	}
 
+	c.Locals("flow", flow)
 	return c.Next()
 }
 

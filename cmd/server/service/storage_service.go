@@ -23,7 +23,7 @@ type SavedFlow struct {
 	Name          string           `json:"name" bson:"name"`
 	Source        model.SomeSource `json:"source" bson:"source"`
 	CacheDuration model.Duration   `json:"cache_duration" bson:"cache_duration"`
-	Flows         []model.Flow     `json:"flows" bson:"flows"`
+	Flows         model.Flows      `json:"flows" bson:"flows"`
 }
 
 // History represents the history of actions performed on a flow.

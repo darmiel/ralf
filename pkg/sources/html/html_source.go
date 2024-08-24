@@ -6,7 +6,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	ics "github.com/darmiel/golang-ical"
 	"github.com/darmiel/ralf/internal/util"
-	httpsource "github.com/darmiel/ralf/pkg/source/http"
+	httpsource "github.com/darmiel/ralf/pkg/sources/http"
 	"golang.org/x/net/html/charset"
 	"net/http"
 	"strconv"
@@ -106,9 +106,9 @@ func (s *Selector) Validate() error {
 	return nil
 }
 
-// Options defines the configuration for HTML source fetching and parsing.
-type Options struct {
-	httpsource.Options `json:",inline" yaml:",inline" bson:",inline"`
+// Source defines the configuration for HTML source fetching and parsing.
+type Source struct {
+	httpsource.Source `json:",inline" yaml:",inline" bson:",inline"`
 
 	// Name is the name of the output calendar
 	Name string `json:"name" yaml:"name" bson:"name"`
@@ -121,13 +121,13 @@ type Options struct {
 }
 
 // KeyIdentifier returns the key identifier for the source
-func (o *Options) KeyIdentifier() string {
+func (o *Source) KeyIdentifier() string {
 	return "html"
 }
 
-// Validate validates the source options
-func (o *Options) Validate() error {
-	if err := o.Options.Validate(); err != nil {
+// Validate validates the sources options
+func (o *Source) Validate() error {
+	if err := o.Source.Validate(); err != nil {
 		return err
 	}
 	if len(o.Selectors) == 0 {
@@ -142,13 +142,13 @@ func (o *Options) Validate() error {
 }
 
 // CacheKey returns the cache key for the source
-func (o *Options) CacheKey() (string, error) {
+func (o *Source) CacheKey() (string, error) {
 	return util.CreateCacheKey(o)
 }
 
 // Run executes the source
-func (o *Options) Run() (*ics.Calendar, error) {
-	resp, err := o.Options.MakeRequest()
+func (o *Source) Run() (*ics.Calendar, error) {
+	resp, err := o.Source.MakeRequest()
 	if err != nil {
 		return nil, err
 	}
@@ -157,12 +157,12 @@ func (o *Options) Run() (*ics.Calendar, error) {
 	return parseResponse(resp, o)
 }
 
-func (o *Options) String() string {
+func (o *Source) String() string {
 	return fmt.Sprintf("HTML Source: %s", o.URL)
 }
 
 // parseResponse reads and parses the HTML document from the response.
-func parseResponse(resp *http.Response, o *Options) (*ics.Calendar, error) {
+func parseResponse(resp *http.Response, o *Source) (*ics.Calendar, error) {
 	utf8Body, err := charset.NewReader(resp.Body, resp.Header.Get("Content-Type"))
 	if err != nil {
 		return nil, err
@@ -175,7 +175,7 @@ func parseResponse(resp *http.Response, o *Options) (*ics.Calendar, error) {
 }
 
 // buildCalendar constructs an iCalendar object from the parsed HTML.
-func buildCalendar(doc *goquery.Document, o *Options) (*ics.Calendar, error) {
+func buildCalendar(doc *goquery.Document, o *Source) (*ics.Calendar, error) {
 	calendar := ics.NewCalendar()
 	setCalendarProperties(calendar, o)
 
@@ -189,8 +189,8 @@ func buildCalendar(doc *goquery.Document, o *Options) (*ics.Calendar, error) {
 	return calendar, nil
 }
 
-// setCalendarProperties sets the properties of the calendar from Options.
-func setCalendarProperties(calendar *ics.Calendar, o *Options) {
+// setCalendarProperties sets the properties of the calendar from Source.
+func setCalendarProperties(calendar *ics.Calendar, o *Source) {
 	if o.Name != "" {
 		calendar.SetName(o.Name)
 	}
@@ -220,15 +220,12 @@ func parseEvents(doc *goquery.Document, calendar *ics.Calendar, selector Selecto
 
 		event := ics.NewEvent(strconv.Itoa(int(*count)))
 		if err = assignEventDetails(event, selection, selector); err != nil {
-			fmt.Println("error:", err)
 			if errors.Is(err, ErrSkip) {
 				err = nil
 				return selector.All
 			}
 			return false
 		}
-
-		fmt.Printf("Adding event: %+v\n", event)
 
 		calendar.AddVEvent(event)
 		return selector.All // continue with other elements if All is set
@@ -264,7 +261,6 @@ func assignEventDetails(event *ics.VEvent, root *goquery.Selection, selector Sel
 		if !selector.Soft {
 			return fmt.Errorf("%w: %s", ErrEmptySelection, selector.Start)
 		}
-		fmt.Println("start text was empty", selector.Start)
 		return ErrSkip
 	}
 	startDate, err := time.Parse(selector.StartFormat, startText)

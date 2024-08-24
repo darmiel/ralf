@@ -16,9 +16,8 @@ type AuthService interface {
 
 // AuthUser represents a user object returned after a successful authentication.
 type AuthUser struct {
-	UserID   string
-	Email    string
-	FullName string
+	UserID string
+	Email  string
 }
 
 // AuthMiddleware is a helper function to create middleware from an AuthService.

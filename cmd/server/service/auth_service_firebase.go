@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	firebase "firebase.google.com/go"
 	"github.com/gofiber/fiber/v2"
@@ -39,6 +40,10 @@ func (f *FirebaseAuthService) ValidateToken(token string) (*AuthUser, error) {
 		return nil, fmt.Errorf("failed to get Firebase auth client: %w", err)
 	}
 
+	if strings.HasPrefix(token, "Bearer ") {
+		token = strings.TrimPrefix(token, "Bearer ")
+	}
+
 	decodedToken, err := auth.VerifyIDToken(context.Background(), token)
 	if err != nil {
 		return nil, fmt.Errorf("invalid Firebase token: %w", err)
@@ -47,11 +52,9 @@ func (f *FirebaseAuthService) ValidateToken(token string) (*AuthUser, error) {
 	// Example of extracting user information from the decoded token.
 	uid := decodedToken.UID
 	email := decodedToken.Claims["email"].(string)
-	name := decodedToken.Claims["name"].(string)
 
 	return &AuthUser{
-		UserID:   uid,
-		Email:    email,
-		FullName: name,
+		UserID: uid,
+		Email:  email,
 	}, nil
 }

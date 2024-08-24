@@ -134,7 +134,7 @@ func setupAuthService(logger *zap.Logger) service.AuthService {
 	switch authProvider {
 	case "firebase":
 		logger.Info("Using Firebase authentication service")
-		firebaseCredentials := os.Getenv("FIREBASE_CREDENTIALS")
+		firebaseCredentials := os.Getenv("FIREBASE_CREDENTIALS_PATH")
 		if firebaseCredentials == "" {
 			logger.Fatal("Firebase credentials file is required for Firebase authentication")
 		}

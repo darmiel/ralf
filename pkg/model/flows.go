@@ -31,9 +31,9 @@ type Conditions []string
 
 func (c *Conditions) MarshalYAML() (interface{}, error) {
 	if len(*c) == 1 {
-		return (*c)[0], nil
+		return yaml.Marshal((*c)[0])
 	}
-	return c, nil
+	return yaml.Marshal([]string(*c))
 }
 
 func (c *Conditions) UnmarshalYAML(value *yaml.Node) error {
